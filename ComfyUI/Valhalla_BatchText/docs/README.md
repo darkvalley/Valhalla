@@ -9,6 +9,8 @@ The complete English user guide and five editable SVG diagrams are in this folde
 - [Installation and Troubleshooting](wiki/Installation-and-Troubleshooting.md)
 - [Wiki publishing instructions](wiki/README-PUBLISH.md)
 
-**Note:** The GitHub Wiki is a separate Git repository. The files in `docs/wiki` are the ready-to-publish source; updating them in the main repository does not automatically update the Wiki tab.
+**Official release:** [Valhalla Batch Text v1.5.3](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.3).
+
+**Wiki publication:** GitHub Wikis use a separate Git repository. The [GitHub Actions Wiki publishing workflow](https://github.com/darkvalley/Valhalla/actions/workflows/publish-batchtext-wiki.yml) synchronizes these pages, once the Wiki remote is available. If the first publication is blocked, create a first `Home` page from [`wiki/Home.md`](wiki/Home.md) in the Wiki tab, then rerun the workflow.
 
 © 2026 Werner de Jong · MIT License.

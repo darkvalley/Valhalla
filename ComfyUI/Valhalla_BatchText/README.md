@@ -3,6 +3,8 @@
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
 
+**[Download the official v1.5.3 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.3)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.3/Valhalla_BatchText_v1.5.3.zip)
+
 ## Overview
 
 Batch Text joins an optional **native ComfyUI STRING list** and **any number of connected STRING inputs** into one `STRING` result. The join operation is performed in Python using `delimiter.join(parts)`.

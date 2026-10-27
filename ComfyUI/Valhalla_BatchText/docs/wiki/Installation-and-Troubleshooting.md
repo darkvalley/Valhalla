@@ -3,10 +3,12 @@
 ## Manual installation (Windows)
 
 1. Stop ComfyUI completely.
-2. Download [darkvalley/Valhalla](https://github.com/darkvalley/Valhalla) outside the ComfyUI `custom_nodes` directory.
-3. Copy only `ComfyUI/Valhalla_BatchText` into `custom_nodes/Valhalla_BatchText` of your ComfyUI installation, replacing the older version (back it up first).
+2. [Download the official v1.5.3 installation ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.3/Valhalla_BatchText_v1.5.3.zip).
+3. Unzip it and copy the included `Valhalla_BatchText` folder into your ComfyUI installation's `custom_nodes` directory, backing up or replacing an earlier version.
 4. Restart ComfyUI, then use `Ctrl+Shift+R` in your browser.
 5. Add the `Batch Text` node under `Valhalla's Calling/Text`.
+
+Alternatively, download the full [Valhalla repository](https://github.com/darkvalley/Valhalla) outside `custom_nodes` and copy only its `ComfyUI/Valhalla_BatchText` folder.
 
 The custom node folder should contain `__init__.py`, `batch_text.py`, and `web/js/batch_text.js`. Do not copy the whole Valhalla repository into `custom_nodes`. No additional Python packages are needed.
 
@@ -18,7 +20,7 @@ The optional included PowerShell installer may be run from the source directory 
 
 **Sockets move but output still has the old order:** v1.5.0 could fail to serialize the order on some frontends. Use **v1.5.3**, which preserves the hidden `input_order` widget and moves linked cable endpoints safely. Save a fresh workflow and test again.
 
-**Inputs seem to change:** numbered `TEXT:n` ports may be renumbered after a move. Their cables remain connected to the original source.
+**Inputs seem to change:** connected `TEXT:n` ports retain their names and original source cables when moved. Check the displayed top-to-bottom order against your text preview.
 
 **Info or delimiter overlaps inputs:** remove duplicate outdated extensions, restart and hard refresh.
 

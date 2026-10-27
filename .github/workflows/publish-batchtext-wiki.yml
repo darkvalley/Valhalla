@@ -37,8 +37,10 @@ jobs:
           auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w 0)"
           wiki_url="https://github.com/${GITHUB_REPOSITORY}.wiki.git"
           if ! git -c "http.https://github.com/.extraheader=${auth}" clone --quiet "${wiki_url}" wiki; then
-            echo '::error::Cannot clone the Wiki. Open the repository Wiki tab, save its first Home page, then rerun this workflow.'
-            exit 1
+            echo 'Wiki clone unavailable; attempting a non-force first publication to master.'
+            mkdir -p wiki
+            git -C wiki init --initial-branch=master
+            git -C wiki remote add origin "${wiki_url}"
           fi
 
           cp -- "${pages[@]/#/${src}/}" wiki/
@@ -50,4 +52,7 @@ jobs:
             exit 0
           fi
           git -C wiki commit -m 'Publish Batch Text v1.5.3 wiki documentation'
-          git -c "http.https://github.com/.extraheader=${auth}" -C wiki push origin HEAD
+          if ! git -c "http.https://github.com/.extraheader=${auth}" -C wiki push origin HEAD; then
+            echo '::error::GitHub rejected the Wiki push. Create and save its first Home page in the GitHub Wiki tab, then rerun this workflow.'
+            exit 1
+          fi

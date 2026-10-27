@@ -16,6 +16,8 @@ Batch Text joins any number of `STRING` inputs and an optional native `STRING` l
 - [Combining Inputs and Delimiters](https://github.com/darkvalley/Valhalla/wiki/Combining-Inputs-and-Delimiters)
 - [Installation and Troubleshooting](https://github.com/darkvalley/Valhalla/wiki/Installation-and-Troubleshooting)
 
+**Official GitHub Release:** [v1.5.3](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.3) · [Download installation ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.3/Valhalla_BatchText_v1.5.3.zip).
+
 **Source code:** [Valhalla Batch Text](https://github.com/darkvalley/Valhalla/tree/main/ComfyUI/Valhalla_BatchText) · [MIT license](https://github.com/darkvalley/Valhalla/blob/main/ComfyUI/Valhalla_BatchText/LICENSE).
 
 *The diagrams illustrate the actual socket names and ordering rules; they are documentation diagrams, not live screenshots.*
