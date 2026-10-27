@@ -1,5 +1,5 @@
 /**
- * Valhalla Batch Text v1.5.1 — reorderable input sockets (including native
+ * Valhalla Batch Text v1.5.3 — stable reorderable input sockets (including native
  * TEXT_LIST), dynamic TEXT:n inputs, custom delimiters, and help popup.
  * Joining is performed in Python. © 2026 Werner de Jong. MIT License.
  */
@@ -85,13 +85,15 @@ function resizeNode(node) {
   placeWidgetsAfterSockets(node);
   const computed = node.computeSize?.();
   if (computed && Number.isFinite(computed[1]) && node.setSize) {
-    node.setSize([
-      Math.max(node.size?.[0] ?? 230, computed[0] || 230, 230),
-      Math.max(node.size?.[1] ?? 100, computed[1], 100),
-    ]);
+    const w = Math.max(node.size?.[0] ?? 280, computed[0] || 280, 280);
+    // Shrink stale heights as well as growing: v1.5.1 used the previous node
+    // height as a permanent lower bound, leaving a large blank area.
+    const activeWidgets = (node.widgets ?? []).filter(w => !w.hidden && !w.options?.hidden);
+    const widgetBottom = node.widgets_start_y + activeWidgets.reduce(
+      (height, w) => height + (typeof w.computeSize === "function"
+        ? (w.computeSize(w)[1] || 28) : 28) + 4, 0);
+    node.setSize([w, Math.max(105, computed[1], widgetBottom + 15)]);
   }
-  // Recalculate positions right now in classic LiteGraph; merely resizing
-  // doesn't update widget.y. During nodeCreated the graph may be absent.
   if (node.graph && typeof node.arrange === "function") node.arrange();
   node.setDirtyCanvas?.(true, true);
 }
@@ -117,18 +119,33 @@ function updateInputs(node) {
   node.__valhallaBatchTextUpdating = true;
   try {
     ensureListSocket(node);
-    // Compact to connected TEXT sockets; never touch TEXT_LIST or widgets.
+    // A connected socket's NAME is its stable identity. Never renumber
+    // connected sockets when moving/reloading them: changing TEXT:1 to
+    // TEXT:0 after a swap makes different joins indistinguishable.
+    const names = new Set();
+    for (const input of node.inputs ?? []) {
+      if (!numberedInput(input.name)) continue;
+      if (names.has(input.name)) {
+        let id = 0;
+        while (names.has(`${PREFIX}${id}`)) id++;
+        input.name = `${PREFIX}${id}`;
+      }
+      names.add(input.name);
+      input.label = input.name;
+      input.type = INPUT_TYPE;
+    }
+    // Keep one unconnected TEXT socket at the end. All connected inputs
+    // keep their exact names, their physical order and their link IDs.
     for (let i = (node.inputs?.length ?? 0) - 1; i >= 0; i--) {
       const input = node.inputs[i];
       if (numberedInput(input.name) && !connected(input)) node.removeInput(i);
     }
-    const active = (node.inputs ?? []).filter((input) => numberedInput(input.name));
-    active.forEach((input, index) => {
-      input.name = `${PREFIX}${index}`;
-      input.label = `${PREFIX}${index}`;
-      input.type = INPUT_TYPE;
-    });
-    node.addInput(`${PREFIX}${active.length}`, INPUT_TYPE);
+    let nextId = 0;
+    while ((node.inputs ?? []).some(input => input.name === `${PREFIX}${nextId}`)) nextId++;
+    node.addInput(`${PREFIX}${nextId}`, INPUT_TYPE);
+    // LiteGraph updates target_slot on removeInput normally. Repair links
+    // afterwards as well, for canvas implementations with deferred changes.
+    syncLinkedSlots(node);
     hideOrderWidget(node);
     syncOrderWidget(node);
     resizeNode(node);
@@ -181,6 +198,9 @@ function hideOrderWidget(node) {
 }
 
 function movableInputs(node) {
+  // Include TEXT_LIST even if currently empty. Include every connected TEXT
+  // socket. The remaining free socket is an add-connection affordance, not a
+  // meaningful item for join order. Its arrow buttons are shown disabled.
   return (node.inputs ?? [])
     .map((input, slot) => ({ input, slot }))
     .filter(({ input }) => input.name === LIST_INPUT_NAME ||
@@ -192,13 +212,53 @@ function syncOrderWidget(node) {
   if (widget) widget.serializeValue();
 }
 
-// When moving sockets, keep the underlying LiteGraph links attached to the
-// same input *objects*, updating each attached link's target_slot index.
-// Swapping visual rows without doing this silently rewires a workflow.
+// ComfyUI's newer linkStore indexes links by (node, target_slot). The naive
+// approach of swapping input objects and then changing target_slot one by one
+// is *not* a legal swap: the first update is rejected while the destination is
+// occupied. Worse, modern input.link is a read-only view of that store, so a
+// swapped input object will immediately report whichever link still occupies
+// the OLD row. Always snapshot links BEFORE changing anything.
 function getGraphLink(graph, linkId) {
-  if (!graph?.links) return undefined;
-  if (typeof graph.links.get === "function") return graph.links.get(linkId);
-  return graph.links[linkId];
+  if (!graph || linkId === null || linkId === undefined) return undefined;
+  if (typeof graph.getLink === "function") return graph.getLink(linkId);
+  if (typeof graph.links?.get === "function") return graph.links.get(linkId);
+  return graph.links?.[linkId];
+}
+
+function inputLinkAt(node, slot) {
+  // Public ComfyUI/LiteGraph API is preferred to the deprecated input.link.
+  if (typeof node.getInputLink === "function") {
+    const link = node.getInputLink(slot);
+    if (link !== undefined && link !== null) return link;
+  }
+  return getGraphLink(node.graph, node.inputs?.[slot]?.link);
+}
+
+function syncLinkedSlots(node) {
+  // When updateInputs REMOVE sockets, newer ComfyUI handles the shift through
+  // its atomic replaceNodeInputs() operation. On older LiteGraph versions this
+  // defensive pass corrects stale link indices. Never write a target slot just
+  // because it differs unless its destination is genuinely vacant.
+  for (let slot = 0; slot < (node.inputs?.length ?? 0); slot++) {
+    const link = inputLinkAt(node, slot);
+    if (!link || link.target_slot === slot) continue;
+    if (!trySetTargetSlot(link, slot)) {
+      console.warn("Batch Text: link target slot mismatch after input cleanup", link.id);
+    }
+  }
+}
+
+function trySetTargetSlot(link, slot) {
+  if (!link) return true;
+  try {
+    link.target_slot = slot;
+    // In recent ComfyUI this setter can silently reject an occupied slot;
+    // explicitly inspect its result instead of assuming it worked.
+    return link.target_slot === slot;
+  } catch (error) {
+    console.warn("Batch Text: failed to move link", link.id, error);
+    return false;
+  }
 }
 
 function moveSocket(node, index, direction) {
@@ -207,30 +267,60 @@ function moveSocket(node, index, direction) {
   const next = at + direction;
   if (at < 0 || next < 0 || next >= movable.length) return false;
   const otherIndex = movable[next].slot;
-  const original = node.inputs[index];
-  node.inputs[index] = node.inputs[otherIndex];
-  node.inputs[otherIndex] = original;
-  // Update EVERY linked input on this node, not only the moved sockets.
-  // This also supports older workflows with stored node connections.
-  for (let slot = 0; slot < node.inputs.length; slot++) {
-    const linkId = node.inputs[slot]?.link;
-    if (linkId === null || linkId === undefined) continue;
-    const link = getGraphLink(node.graph, linkId);
-    if (link) link.target_slot = slot;
+
+  const firstInput = node.inputs[index];
+  const secondInput = node.inputs[otherIndex];
+  const firstLink = inputLinkAt(node, index);
+  const secondLink = inputLinkAt(node, otherIndex);
+  if (firstLink && firstLink === secondLink) return false;
+
+  // Keep an unconnected, automatically-created trailing TEXT:n socket as a
+  // temporary *vacant* target. This allows a collision-free rotation of two
+  // already-connected links through the linkStore. Links keep their IDs and
+  // original source nodes, including reroute chains.
+  const spareIndex = (node.inputs ?? []).findIndex((input, slot) =>
+    slot !== index && slot !== otherIndex && numberedInput(input.name) &&
+    !connected(input));
+  if (firstLink && secondLink && spareIndex < 0) {
+    console.warn("Batch Text: cannot swap two linked sockets without a free input");
+    return false;
   }
-  // Rename numbered inputs according to their NEW physical order; names stay
-  // unique while the input objects keep their original link IDs.
-  let nextNumber = 0;
-  for (const input of node.inputs) {
-    if (!numberedInput(input.name)) continue;
-    input.name = `${PREFIX}${nextNumber}`;
-    input.label = input.name;
-    nextNumber++;
+
+  // The only link updates permitted are those whose destinations are vacant.
+  // Roll back if a backend rejects any step; never leave a visual-only reorder.
+  if (firstLink && secondLink) {
+    if (!trySetTargetSlot(firstLink, spareIndex)) return false;
+    if (!trySetTargetSlot(secondLink, index)) {
+      trySetTargetSlot(firstLink, index);
+      return false;
+    }
+    if (!trySetTargetSlot(firstLink, otherIndex)) {
+      // Restore both while the vacant spare socket still exists.
+      if (trySetTargetSlot(secondLink, otherIndex)) {
+        trySetTargetSlot(firstLink, index);
+      }
+      return false;
+    }
+  } else if (firstLink) {
+    if (!trySetTargetSlot(firstLink, otherIndex)) return false;
+  } else if (secondLink) {
+    if (!trySetTargetSlot(secondLink, index)) return false;
   }
+
+  // Reorder complete slot objects with one array splice. ComfyUI's current
+  // renderer observes splice mutations (the array is shallowReactive). The
+  // old writable LiteGraph input.link fields travel with their slot objects;
+  // the newer read-only getters now return the link for the NEW target index.
+  const updated = [...node.inputs];
+  [updated[index], updated[otherIndex]] = [secondInput, firstInput];
+  node.inputs.splice(0, node.inputs.length, ...updated);
+
+  // The processing order is the actual visible order, not numeric TEXT:n IDs.
   syncOrderWidget(node);
   resizeNode(node);
   if (node.graph) {
-    node.graph._version = (node.graph._version ?? 0) + 1;
+    if (typeof node.graph.incrementVersion === "function") node.graph.incrementVersion();
+    else node.graph._version = (node.graph._version ?? 0) + 1;
     node.graph.setDirtyCanvas?.(true, true);
   }
   node.setDirtyCanvas?.(true, true);
@@ -247,49 +337,68 @@ function slotRowY(node, slot) {
   return 32 + (slot + 1) * SLOT_HEIGHT;
 }
 
+// Two aligned, outlined buttons per input row (as in the published guide),
+// instead of floating glyphs at different X positions.
 function arrowPositions(node) {
-  const width = node.size?.[0] ?? 230;
-  const downX = Math.max(120, Math.round(width * 0.53));
-  const upX = Math.min(width - 43, Math.max(downX + 25, Math.round(width * 0.63)));
-  return { downX, upX, radius: Math.min(18, Math.max(11, width * 0.034)) };
+  const width = node.size?.[0] ?? 280;
+  const side = 23;
+  return {
+    upX: Math.max(126, width - 119),
+    downX: Math.max(156, width - 88),
+    half: side / 2,
+  };
 }
 
 function arrowHit(node, point) {
   if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
-  const { downX, upX, radius } = arrowPositions(node);
+  const { upX, downX, half } = arrowPositions(node);
   const movable = movableInputs(node);
-  for (let orderIndex = 0; orderIndex < movable.length; orderIndex++) {
-    const { slot } = movable[orderIndex];
+  for (let i = 0; i < movable.length; i++) {
+    const { slot } = movable[i];
     const y = slotRowY(node, slot);
-    if (Math.abs(point[1] - y) > Math.max(radius, 12)) continue;
-    if (orderIndex < movable.length - 1 && Math.abs(point[0] - downX) < radius + 3) {
-      return { slot, direction: 1 };
-    }
-    if (orderIndex > 0 && Math.abs(point[0] - upX) < radius + 3) {
+    if (Math.abs(point[1] - y) > half + 2) continue;
+    if (i > 0 && Math.abs(point[0] - upX) <= half + 2)
       return { slot, direction: -1 };
-    }
+    if (i < movable.length - 1 && Math.abs(point[0] - downX) <= half + 2)
+      return { slot, direction: 1 };
   }
   return null;
 }
 
-function drawArrow(ctx, x, y, r, direction, hovered) {
-  ctx.save();
-  ctx.translate(x, y);
-  if (direction === -1) ctx.rotate(Math.PI);
+function roundedRect(ctx, x, y, size, corner = 4) {
+  const half = size / 2;
+  const left = x - half, top = y - half, right = left + size, bottom = top + size;
   ctx.beginPath();
-  ctx.moveTo(-r * 0.43, -r * 0.75);
-  ctx.lineTo(r * 0.43, -r * 0.75);
-  ctx.lineTo(r * 0.43, 0);
-  ctx.lineTo(r * 0.85, 0);
-  ctx.lineTo(0, r * 0.82);
-  ctx.lineTo(-r * 0.85, 0);
-  ctx.lineTo(-r * 0.43, 0);
+  ctx.moveTo(left + corner, top);
+  ctx.lineTo(right - corner, top);
+  ctx.quadraticCurveTo(right, top, right, top + corner);
+  ctx.lineTo(right, bottom - corner);
+  ctx.quadraticCurveTo(right, bottom, right - corner, bottom);
+  ctx.lineTo(left + corner, bottom);
+  ctx.quadraticCurveTo(left, bottom, left, bottom - corner);
+  ctx.lineTo(left, top + corner);
+  ctx.quadraticCurveTo(left, top, left + corner, top);
   ctx.closePath();
-  ctx.fillStyle = hovered ? "#ffffff" : "#c6d0dc";
-  ctx.strokeStyle = "#10141a";
-  ctx.lineWidth = Math.max(1.3, r * 0.18);
-  ctx.lineJoin = "round";
+}
+
+function drawArrowButton(ctx, x, y, direction, enabled, hovered) {
+  ctx.save();
+  roundedRect(ctx, x, y, 23);
+  ctx.fillStyle = hovered && enabled ? "#304E70" : "#202832";
+  ctx.strokeStyle = enabled ? (hovered ? "#81BDFF" : "#6C7E90") : "#3A4756";
+  ctx.lineWidth = 1.25;
   ctx.fill();
+  ctx.stroke();
+  // Up/down chevrons: precisely the same geometry on each row.
+  const shift = direction === -1 ? -1 : 1;
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y - 3 * shift);
+  ctx.lineTo(x, y + 3 * shift);
+  ctx.lineTo(x + 5, y - 3 * shift);
+  ctx.strokeStyle = !enabled ? "#657181" : hovered ? "#FFFFFF" : "#E8F0FA";
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.stroke();
   ctx.restore();
 }
@@ -297,21 +406,21 @@ function drawArrow(ctx, x, y, r, direction, hovered) {
 function drawOrderControls(node, ctx) {
   if (!ctx || node.flags?.collapsed) return;
   const movable = movableInputs(node);
-  if (movable.length < 2) return;
-  const { downX, upX, radius } = arrowPositions(node);
-  for (let orderIndex = 0; orderIndex < movable.length; orderIndex++) {
-    const { slot } = movable[orderIndex];
+  const { upX, downX } = arrowPositions(node);
+  const movableIndexes = new Map(movable.map((item, i) => [item.slot, i]));
+  for (let slot = 0; slot < (node.inputs?.length ?? 0); slot++) {
+    const input = node.inputs[slot];
+    if (input.name !== LIST_INPUT_NAME && !numberedInput(input.name)) continue;
+    const at = movableIndexes.get(slot);
+    const canUp = at !== undefined && at > 0;
+    const canDown = at !== undefined && at < movable.length - 1;
     const y = slotRowY(node, slot);
-    if (orderIndex < movable.length - 1) {
-      drawArrow(ctx, downX, y, radius, 1,
-        node.__valhallaBatchTextHover?.slot === slot &&
-        node.__valhallaBatchTextHover?.direction === 1);
-    }
-    if (orderIndex > 0) {
-      drawArrow(ctx, upX, y, radius, -1,
-        node.__valhallaBatchTextHover?.slot === slot &&
-        node.__valhallaBatchTextHover?.direction === -1);
-    }
+    drawArrowButton(ctx, upX, y, -1, canUp,
+      canUp && node.__valhallaBatchTextHover?.slot === slot &&
+      node.__valhallaBatchTextHover?.direction === -1);
+    drawArrowButton(ctx, downX, y, 1, canDown,
+      canDown && node.__valhallaBatchTextHover?.slot === slot &&
+      node.__valhallaBatchTextHover?.direction === 1);
   }
 }
 
@@ -490,16 +599,16 @@ function showInfoDialog() {
   dialog.innerHTML = `
     <div class="vb-content">
       <h2>ⓘ Batch Text</h2>
-      <p class="vb-muted">Valhalla's Calling · v1.5.1</p>
+      <p class="vb-muted">Valhalla's Calling · v1.5.3</p>
       <p>Combine an optional native ComfyUI text list and any number of individual text inputs into a single <code>STRING</code> output.</p>
       <h3>Inputs</h3>
       <p><strong>☷ TEXT_LIST:</strong> A square socket for a native ComfyUI STRING list (<code>OUTPUT_IS_LIST=True</code> at the source). It does not accept arbitrary image batches or object types. A multiline STRING remains a single text item; it is not split at line breaks.</p>
-      <p><strong>TEXT:0, TEXT:1, ...:</strong> Regular STRING inputs. Connecting the last available input automatically adds another one. Disconnecting an input removes unused sockets while retaining one free socket.</p>
-      <p><strong>Join order:</strong> The vertical order of the connected sockets, top to bottom. Use the down and up arrows beside each input to move it while retaining its cable.</p>
+      <p><strong>TEXT:0, TEXT:1, ...:</strong> Regular STRING inputs. Connecting the last available input automatically adds another one. Connected sockets keep their unique TEXT:n names when you reorder them. The trailing free socket cannot be moved until connected.</p>
+      <p><strong>Join order:</strong> The vertical order of the connected sockets, top to bottom. Use the outlined up/down buttons beside each row to move any connected TEXT input or TEXT_LIST; the original cable and socket name stay attached.</p>
       <h3>How to use</h3>
       <ol>
         <li>Connect a native text list to <code>☷ TEXT_LIST</code>, individual strings to the <code>TEXT:n</code> inputs, or both.</li>
-        <li>Click an arrow beside a connected input to move that socket up or down. The connected cable moves with its socket; save the workflow to retain the order.</li>
+        <li>Click the up or down button beside any connected TEXT:n input or TEXT_LIST to change its processing position. Disabled arrows indicate the edge of the available range. The cable stays attached; save the workflow to retain the order.</li>
         <li>Select the separator using the <code>delimiter</code> dropdown.</li>
         <li>Select <code>Custom</code> to show <code>custom_delimiter</code>. Enter any text, punctuation, emoji, multiple characters, or actual line breaks.</li>
         <li>Select <code>None (direct)</code> to join the texts with no separator.</li>

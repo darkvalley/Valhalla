@@ -1,4 +1,4 @@
-"""Valhalla Batch Text v1.5.1 — STRING and native ComfyUI list joiner.
+"""Valhalla Batch Text v1.5.3 — STRING and native ComfyUI list joiner.
 
 Multiple dynamically-created STRING sockets TEXT:0, TEXT:1, ... and a native
 TEXT_LIST can be rearranged vertically using frontend controls. The saved

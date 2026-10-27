@@ -1,4 +1,4 @@
-# Installation and Troubleshooting — v1.5.1
+# Installation and Troubleshooting — v1.5.3
 
 ## Manual installation (Windows)
 
@@ -14,9 +14,9 @@ The optional included PowerShell installer may be run from the source directory 
 
 ## Troubleshooting
 
-**No arrows / old interface:** confirm the installed files come from v1.5.1, restart ComfyUI and hard-refresh. Check that you do not have multiple installed copies of the node.
+**No arrows / old interface:** confirm the installed files come from v1.5.3, restart ComfyUI and hard-refresh. Check that you do not have multiple installed copies of the node.
 
-**Sockets move but output still has the old order:** v1.5.0 could fail to serialize the order on some frontends. Use **v1.5.1**, which provides the hidden `input_order` widget explicitly. Save a fresh workflow and test again.
+**Sockets move but output still has the old order:** v1.5.0 could fail to serialize the order on some frontends. Use **v1.5.3**, which preserves the hidden `input_order` widget and moves linked cable endpoints safely. Save a fresh workflow and test again.
 
 **Inputs seem to change:** numbered `TEXT:n` ports may be renumbered after a move. Their cables remain connected to the original source.
 
@@ -29,3 +29,5 @@ The optional included PowerShell installer may be run from the source directory 
 ## Attribution
 
 Conceived and created by Werner de Jong. © 2026. MIT License.
+
+**Port moves but cable still points to old row:** install v1.5.3 and fully restart ComfyUI; the revised link-store-safe movement uses a spare TEXT socket to reposition existing endpoints without disconnecting source links. Hard-refresh with `Ctrl+Shift+R`, and keep only one installed copy.

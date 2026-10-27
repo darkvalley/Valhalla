@@ -1,4 +1,4 @@
-"""Valhalla Batch Text v1.5.1 — © 2026 Werner de Jong, MIT license."""
+"""Valhalla Batch Text v1.5.3 — © 2026 Werner de Jong, MIT license."""
 
 from .batch_text import ValhallaBatchText
 

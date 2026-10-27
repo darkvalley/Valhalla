@@ -1,3 +1,24 @@
+# Changelog
+
+## v1.5.3 — cable-follow reorder fix (27 October 2026)
+
+- Fix link-target collisions when two *connected* input sockets are exchanged on recent ComfyUI frontends using a central link store.
+- Move existing cable endpoints through the spare unconnected `TEXT:n` socket, then swap the complete input slot objects. Existing link IDs, source nodes, and reroute chains are preserved.
+- Change the slot layout through one reactive array splice so the interface and connection endpoints follow the selected order.
+- Detect rejected endpoint moves and abort instead of applying a misleading visual-only swap.
+- Add regression coverage modelling newer ComfyUI's target-occupancy index and read-only `input.link` properties.
+- Keep the Python joiner, delimiters, TEXT_LIST semantics, MIT license and node class unchanged.
+
+# v1.5.2 — Input reordering UI and text-input bug fix (27 October 2026)
+
+- Draw two aligned, outlined arrow buttons on every `TEXT_LIST` and `TEXT:n` row, consistent with the published interface illustrations.
+- Fix a processing-order bug when swapping two ordinary `TEXT:n` inputs: their **original names and attached cables** stay with the moved sockets instead of being renumbered after the move.
+- Keep the saved `input_order` value in sync with physical row order so the Python join operation follows what the user sees.
+- Show disabled arrows for the first/last available positions and the unused free input.
+- Prevent stale node heights from leaving large blank areas after disconnecting inputs.
+- Extend JS simulation tests for moving two ordinary TEXT inputs, link target-slot remapping, and rendering per-row buttons.
+- Keep the node class and types unchanged. Manual installation; no workflow files supplied.
+
 # v1.5.1 — Reorderable Inputs (27 October 2026)
 
 - Add up/down controls for changing the top-to-bottom processing order of connected `TEXT:n` inputs and `TEXT_LIST`.

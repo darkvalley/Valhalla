@@ -105,8 +105,9 @@ assert.deepEqual(node.inputs.map(i=>i.name),['TEXT_LIST','TEXT:0','TEXT:1','TEXT
 assertNoWidgetOverlap(node);
 assert.equal(node.widgets_start_y, 5*20+12, 'widget anchor includes list input');
 node.inputs[2].link=null;node.onConnectionsChange(1,2,false);flush();
-assert.deepEqual(node.inputs.map(i=>i.name),['TEXT_LIST','TEXT:0','TEXT:1','TEXT:2']);
+assert.deepEqual(node.inputs.map(i=>i.name),['TEXT_LIST','TEXT:0','TEXT:2','TEXT:1']);
 assert.equal(node.inputs[2].link,12);
+assert.equal(node.inputs[3].link,null, 'new free socket uses reclaimed id, connected name stays unchanged');
 assertNoWidgetOverlap(node);
 assert.equal(node.widgets_start_y, 4*20+12, 'widget anchor moves back up when slots removed');
 const legacy=mockNode();extension.nodeCreated(legacy);
@@ -177,7 +178,7 @@ const orderField = reorder.widgets.find(w=>w.name==='input_order');
 assert.ok(orderField && orderField.hidden && orderField.serialize);
 assert.equal(orderField.serializeValue(),'["TEXT_LIST","TEXT:0","TEXT:1"]');
 // First row is slot index 0, fallback Y=32+(0+1)*20; down arrow x=round(240*.53).
-assert.equal(reorder.onMouseDown({button:0},[127,52]), true);
+assert.equal(reorder.onMouseDown({button:0},[reorder.size[0]-88,52]), true);
 assert.deepEqual(reorder.inputs.map(i=>i.name),['TEXT:0','TEXT_LIST','TEXT:1','TEXT:2']);
 assert.equal(orderField.serializeValue(),'["TEXT:0","TEXT_LIST","TEXT:1"]');
 assert.deepEqual([reorder.graph.links[201].target_slot,reorder.graph.links[202].target_slot,reorder.graph.links[203].target_slot],[1,0,2]);
@@ -185,4 +186,150 @@ assert.equal(reorder.inputs[0].link,202);
 assert.equal(reorder.inputs[1].link,201);
 assertNoWidgetOverlap(reorder);
 
-console.log('OK: v1.5.1 English UI, arrow reordering, stable link slots, saveable order, and legacy compatibility');
+
+// The v1.5.1 bug: swapping two individual TEXT inputs then renaming them
+// meant input_order appeared unchanged. Their original names MUST travel with
+// their cables and the serialized order MUST actually change.
+assert.equal(reorder.inputs[2].name, 'TEXT:1');
+const secondRowY = 32 + (2 + 1)*20;  // slot 2: TEXT:1
+// Move TEXT:1 up, swapping it with TEXT_LIST (list becomes third).
+assert.equal(reorder.onMouseDown({button:0}, [reorder.size[0]-119, secondRowY]), true);
+assert.deepEqual(reorder.inputs.map(i=>i.name),['TEXT:0','TEXT:1','TEXT_LIST','TEXT:2']);
+assert.equal(orderField.serializeValue(), '["TEXT:0","TEXT:1","TEXT_LIST"]');
+assert.equal(reorder.graph.links[203].target_slot, 1);
+assert.equal(reorder.graph.links[201].target_slot, 2);
+// Move TEXT:1 up once more, swapping TWO individual TEXT sockets.
+assert.equal(reorder.onMouseDown({button:0}, [reorder.size[0]-119, 72]), true);
+assert.deepEqual(reorder.inputs.map(i=>i.name),['TEXT:1','TEXT:0','TEXT_LIST','TEXT:2']);
+assert.equal(orderField.serializeValue(), '["TEXT:1","TEXT:0","TEXT_LIST"]');
+assert.equal(reorder.graph.links[203].target_slot, 0);
+assert.equal(reorder.graph.links[202].target_slot, 1);
+assert.equal(reorder.graph.links[201].target_slot, 2);
+assert.equal(reorder.inputs[0].link, 203);
+assert.equal(reorder.inputs[1].link, 202);
+assert.equal(reorder.inputs[2].link, 201);
+// Move the same ordinary TEXT socket DOWN. No identity or connection loss.
+assert.equal(reorder.onMouseDown({button:0}, [reorder.size[0]-88, 52]), true);
+assert.deepEqual(reorder.inputs.map(i=>i.name), ['TEXT:0','TEXT:1','TEXT_LIST','TEXT:2']);
+assert.equal(orderField.serializeValue(), '["TEXT:0","TEXT:1","TEXT_LIST"]');
+// Free tail socket stays available; arrows are disabled on that row.
+assert.equal(reorder.onMouseDown({button:0}, [reorder.size[0]-88,112]), undefined);
+// Draw one outlined up and down button on EACH row, including the last free
+// socket (disabled there). Buttons are aligned on the same two X columns.
+const drawStats={fill:0,stroke:0,paths:0};
+const context={
+  save(){},restore(){},beginPath(){drawStats.paths++},moveTo(){},lineTo(){},
+  quadraticCurveTo(){},closePath(){},fill(){drawStats.fill++},
+  stroke(){drawStats.stroke++},
+};
+reorder.onDrawForeground(context);
+assert.equal(drawStats.fill,8, '2 boxed arrow buttons for each of 4 sockets');
+assert.equal(drawStats.stroke,16, 'outline + chevron per arrow button');
+// Once reloaded, input names, order and links remain stable.
+const persisted={widgets_values:["Blank line (\\n\\n)", "", orderField.serializeValue()]};
+reorder.onConfigure(persisted);flush();
+assert.deepEqual(reorder.inputs.map(i=>i.name), ['TEXT:0','TEXT:1','TEXT_LIST','TEXT:2']);
+assert.equal(orderField.serializeValue(), '["TEXT:0","TEXT:1","TEXT_LIST"]');
+assertNoWidgetOverlap(reorder);
+console.log('OK: v1.5.3 outlined per-row arrow buttons, individual TEXT reordering, stable cable links, saved order, and legacy compatibility');
+
+
+
+// v1.5.3: Modern ComfyUI stores link endpoints in a target-occupancy index.
+// A naive A.target_slot=B / B.target_slot=A swap FAILS because B is still
+// occupied. input.link is a computed, read-only view of that index. Exercise
+// the real constraints to catch graphical-only swaps before shipping.
+function modernMockNode() {
+  const modern = mockNode();
+  modern.id = 77;
+  const links = new Map();
+  modern.graph = {links, getLink(id){return links.get(id)}, setDirtyCanvas(){},
+    incrementVersion(){this.version=(this.version??0)+1}};
+  const linkAt = slot => [...links.values()].find(l => l.target_slot === slot);
+  modern.getInputLink = slot => linkAt(slot);
+  modern.addInput = function(name,type) {
+    const input = {name,type};
+    Object.defineProperty(input, 'link', {
+      get(){return linkAt(modern.inputs.indexOf(input))?.id ?? null;},
+      set(){throw new Error('Modern ComfyUI input.link must not be assigned');}
+    });
+    modern.inputs.push(input);
+  };
+  modern.removeInput = function(index) {
+    if(linkAt(index)) throw new Error('Cannot remove connected input');
+    modern.inputs.splice(index,1);
+    for (const link of links.values()) {
+      if(link.target_slot > index) link.target_slot -= 1;
+    }
+  };
+  modern.attach = (slot,id,origin)=> {
+    if(linkAt(slot)) throw Error('occupied target');
+    const link={id,origin_id:origin,origin_slot:0};
+    let currentSlot=slot;
+    Object.defineProperty(link, 'target_slot', {
+      get(){return currentSlot;},
+      set(next){
+        if ([...links.values()].some(other => other!==link && other.target_slot===next)) {
+          // Real ComfyUI linkStore refuses this update and retains old target.
+          link.refused=(link.refused??0)+1;
+          return;
+        }
+        currentSlot=next;
+      }
+    });
+    links.set(id,link);
+    modern.onConnectionsChange(1,slot,true);
+    flush();
+    return link;
+  };
+  return modern;
+}
+const modern = modernMockNode();
+extension.nodeCreated(modern);flush();
+const lList = modern.attach(0,601,910);
+const lZero = modern.attach(1,602,920);
+const lOne = modern.attach(2,603,930);
+function connectedSource(name){
+  const slot=modern.inputs.findIndex(i=>i.name===name);
+  return modern.getInputLink(slot)?.origin_id;
+}
+const assertModernLinks=()=>{
+  for(const [id,origin] of [[601,910],[602,920],[603,930]]) {
+    const link=modern.graph.getLink(id);
+    const position=modern.inputs[link.target_slot];
+    const expectedName=({601:'TEXT_LIST',602:'TEXT:0',603:'TEXT:1'})[id];
+    assert.equal(position?.name,expectedName,`cable ${id} must follow ${expectedName}`);
+    assert.equal(link.origin_id,origin,'must preserve source node');
+  }
+  for(let s=0;s<3;s++) assert.equal(modern.inputs[s].link,modern.getInputLink(s)?.id);
+};
+assertModernLinks();
+// Move TEXT_LIST below TEXT:0, both connected. Cables follow both ports.
+assert.equal(modern.onMouseDown({button:0}, [modern.size[0]-88,52]),true);
+assert.deepEqual(modern.inputs.map(i=>i.name),['TEXT:0','TEXT_LIST','TEXT:1','TEXT:2']);
+assertModernLinks();
+assert.equal(modern.widgets.find(w=>w.name==='input_order').serializeValue(),
+  '["TEXT:0","TEXT_LIST","TEXT:1"]');
+assert.equal(connectedSource('TEXT:0'),920);
+assert.equal(connectedSource('TEXT_LIST'),910);
+// Move ordinary TEXT:0 below TEXT_LIST and below TEXT:1.
+assert.equal(modern.onMouseDown({button:0}, [modern.size[0]-88,52]),true);
+assert.equal(modern.onMouseDown({button:0}, [modern.size[0]-88,72]),true);
+assert.deepEqual(modern.inputs.map(i=>i.name),['TEXT_LIST','TEXT:1','TEXT:0','TEXT:2']);
+assertModernLinks();
+assert.equal(modern.widgets.find(w=>w.name==='input_order').serializeValue(),
+  '["TEXT_LIST","TEXT:1","TEXT:0"]');
+// Now a regular text input moves ABOVE the list. Its cable must follow.
+assert.equal(modern.onMouseDown({button:0}, [modern.size[0]-119,72]),true);
+assert.deepEqual(modern.inputs.map(i=>i.name),['TEXT:1','TEXT_LIST','TEXT:0','TEXT:2']);
+assertModernLinks();
+assert.equal(connectedSource('TEXT:1'),930);
+assert.equal(modern.widgets.find(w=>w.name==='input_order').serializeValue(),
+  '["TEXT:1","TEXT_LIST","TEXT:0"]');
+assert.equal(lList.refused??0,0,'new algorithm must avoid occupied targets');
+assert.equal(lZero.refused??0,0,'new algorithm must avoid occupied targets');
+assert.equal(lOne.refused??0,0,'new algorithm must avoid occupied targets');
+modern.onConfigure({widgets_values:['None (direct)','','["TEXT:1","TEXT_LIST","TEXT:0"]']});flush();
+assertModernLinks();
+assertNoWidgetOverlap(modern);
+console.log('OK: modern linkStore occupancy, read-only input.link, moving all cables with sockets, and saved join order');

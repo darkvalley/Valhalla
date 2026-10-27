@@ -26,7 +26,7 @@ if($LASTEXITCODE -ne 0) { throw 'git add failed' }
 & git -C $WorkDirectory diff --cached --quiet
 if($LASTEXITCODE -eq 0) { Write-Host 'Wiki is up to date.'; exit 0 }
 if($LASTEXITCODE -ne 1) { throw 'git diff failed' }
-& git -C $WorkDirectory commit -m 'Update Batch Text v1.5.1 Wiki with input reordering'
+& git -C $WorkDirectory commit -m 'Update Batch Text v1.5.3 Wiki with input reordering'
 if($LASTEXITCODE -ne 0) { throw 'git commit failed; check user name and email.' }
 & git -C $WorkDirectory push
 if($LASTEXITCODE -ne 0) { throw 'git push failed; check GitHub login/permissions.' }

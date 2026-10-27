@@ -1,4 +1,4 @@
-# Reordering Inputs — New in v1.5.1
+# Reordering Inputs — Updated for v1.5.3
 
 The **up/down arrows** beside the sockets change the order in which Batch Text processes values. The arrows do not simply change the appearance of the node: the Python backend receives the saved order.
 
@@ -27,7 +27,19 @@ The **up/down arrows** beside the sockets change the order in which Batch Text p
 ## Technical behavior
 
 - The frontend updates the sockets' physical order, keeps link objects attached and updates LiteGraph `target_slot` indices.
-- Numbered `TEXT:n` labels can change when inputs are moved. The last free `TEXT:n` is an unconnected placeholder and does not contribute output.
+- Numbered `TEXT:n` labels stay with their socket and its existing source connection when moved. The last free `TEXT:n` is an unconnected placeholder and does not contribute output.
 - The hidden `input_order` widget is serialized with the workflow and API prompt. Do not edit it manually.
 - Older workflows without order metadata retain the old fallback order: `TEXT_LIST` first, then `TEXT:0`, `TEXT:1`, etc.
-- If the ordering does not affect the output, ensure the installed node is **v1.5.1 or later**, restart ComfyUI, and hard-refresh the frontend.
+- If the ordering does not affect the output, ensure the installed node is **v1.5.3 or later**, restart ComfyUI, and hard-refresh the frontend.
+
+## UI correction in v1.5.2
+
+Two outlined **↑ / ↓** buttons appear beside each input, on the same row. All connected ordinary `TEXT:n` inputs can move relative to one another, as can `TEXT_LIST`. When you move `TEXT:1` above `TEXT:0`, those names stay attached to their original cables and the joined output respects their new top-to-bottom order. The unused free text socket shows disabled arrows until connected.
+
+## v1.5.3 — Cables follow reordered ports
+
+In modern ComfyUI versions with a central link store, an occupied target slot cannot be overwritten by the endpoint from another connected socket. **v1.5.3 fixes this:** the node temporarily uses its unconnected spare `TEXT:n` input to move existing link endpoints safely and then repositions the complete socket objects. The original link IDs, source nodes and reroute chains remain intact.
+
+**Try it:** connect `A` to `TEXT:0`, `B` to `TEXT:1`, and an optional native list to `TEXT_LIST`. Move `TEXT:1` above `TEXT:0` and watch its cable follow `TEXT:1`. Next move `TEXT_LIST` between the numbered inputs; its cable must move with it. Queue the workflow: the output order must match the displayed top-to-bottom socket order. Save and reload to confirm it persists.
+
+The owner tested and approved this behavior in a live ComfyUI workflow before the v1.5.3 GitHub publication.

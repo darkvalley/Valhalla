@@ -1,6 +1,6 @@
 # Publish the Valhalla Batch Text Wiki
 
-The actual GitHub Wiki uses a **separate Git repository**, `https://github.com/darkvalley/Valhalla.wiki.git`. This directory contains the English Markdown pages for v1.5.1. The SVG diagrams live under `docs/images/` in the main repository and are linked through raw GitHub URLs.
+The actual GitHub Wiki uses a **separate Git repository**, `https://github.com/darkvalley/Valhalla.wiki.git`. This directory contains the English Markdown pages for v1.5.3. The SVG diagrams live under `docs/images/` in the main repository and are linked through raw GitHub URLs.
 
 First create/save the initial `Home` page at https://github.com/darkvalley/Valhalla/wiki if the Wiki has not yet been initialized. Then use the local `Publish-Valhalla-Wiki.ps1` script, with an authenticated Git for Windows installation:
 

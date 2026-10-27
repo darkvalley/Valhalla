@@ -1,4 +1,4 @@
-# Valhalla Batch Text v1.5.1 — Illustrated documentation
+# Valhalla Batch Text v1.5.3 — Illustrated documentation
 
 The complete English user guide and five editable SVG diagrams are in this folder.
 

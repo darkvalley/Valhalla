@@ -1,6 +1,6 @@
 # Batch Text — Overview
 
-Valhalla Batch Text v1.5.1 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
+Valhalla Batch Text v1.5.3 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
 
 ![Node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
 
