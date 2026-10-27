@@ -1,7 +1,8 @@
-"""Valhalla Batch Text v1.4.0 — STRING and native ComfyUI list joiner.
+"""Valhalla Batch Text v1.5.1 — STRING and native ComfyUI list joiner.
 
-Multiple dynamically-created STRING sockets TEXT:0, TEXT:1, ... are populated
-by the companion frontend extension. No fixed maximum is imposed by this node.
+Multiple dynamically-created STRING sockets TEXT:0, TEXT:1, ... and a native
+TEXT_LIST can be rearranged vertically using frontend controls. The saved
+input_order widget determines actual output ordering in the Python backend.
 
 Copyright (c) 2026 Werner de Jong. MIT License.
 """
@@ -102,7 +103,7 @@ class FlexibleTextInputs(dict):
 
 
 class ValhallaBatchText:
-    """Join a native ComfyUI STRING list and dynamic STRING inputs."""
+    """Join native ComfyUI text inputs in user-defined visual socket order."""
 
     # Native ComfyUI lists use the usual STRING socket type. With this flag,
     # ALL inputs, including widget values, arrive as Python lists. A list
@@ -113,9 +114,9 @@ class ValhallaBatchText:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("TEXT",)
     DESCRIPTION = (
-        "Join native ComfyUI STRING lists through TEXT_LIST, followed by "
-        "dynamically connected TEXT:0, TEXT:1 ... inputs. No input limit. "
-        "Choose a delimiter including CR/LF/CRLF or a custom separator. "
+        "Join a native STRING list and dynamically connected TEXT:n inputs in "
+        "the top-to-bottom socket order selected using the arrow controls. "
+        "Choose a delimiter including CR/LF/CRLF or a custom separator; "
         "A normal multi-line STRING is NOT automatically split into a list. "
         "Click Info for details. © 2026 Werner de Jong (MIT)."
     )
@@ -131,6 +132,10 @@ class ValhallaBatchText:
                 "TEXT_LIST": ("STRING", {
                     "forceInput": True,
                     "tooltip": "Native ComfyUI STRING list (OUTPUT_IS_LIST); an ordinary STRING is one item.",
+                }),
+                "input_order": ("STRING", {
+                    "default": "",
+                    "tooltip": "Automatically maintained by the Batch Text arrow controls; do not edit manually.",
                 }),
             }),
         }
@@ -163,23 +168,54 @@ class ValhallaBatchText:
             )
 
     @classmethod
-    def join_text(cls, delimiter="None (direct)", custom_delimiter="", TEXT_LIST=None, **kwargs):
+    def _input_names_in_order(cls, input_order, available):
+        """Safely interpret saved UI order; include all connected legacy inputs.
+
+        The metadata is an ordinary STRING widget even when INPUT_IS_LIST=True.
+        Never drop text on malformed/stale metadata, and never eval its content.
+        """
+        import json
+
+        old_order = sorted(
+            (name for name in available if _TEXT_INPUT_PATTERN.fullmatch(name)),
+            key=lambda name: int(name.split(":", 1)[1]),
+        )
+        if "TEXT_LIST" in available:
+            old_order.insert(0, "TEXT_LIST")
+
+        raw = cls._unpack_widget(input_order, "input_order")
+        if not isinstance(raw, str) or not raw.strip():
+            return old_order
+        try:
+            stored = json.loads(raw)
+        except (ValueError, TypeError):
+            return old_order
+        if not isinstance(stored, list):
+            return old_order
+        ordered = []
+        for name in stored:
+            if isinstance(name, str) and name in available and name not in ordered:
+                ordered.append(name)
+        # Old or manually edited workflows may contain additional connected
+        # inputs not present in the saved order; append them without data loss.
+        ordered.extend(name for name in old_order if name not in ordered)
+        return ordered
+
+    @classmethod
+    def join_text(cls, delimiter="None (direct)", custom_delimiter="", TEXT_LIST=None,
+                  input_order="", **kwargs):
         mode = cls._unpack_widget(delimiter, "delimiter")
         custom = cls._unpack_widget(custom_delimiter, "custom_delimiter")
         sep = resolve_delimiter(mode, custom)
 
-        parts = []
-        # Defined ordering: list items first, then the dynamic TEXT:n sockets.
+        available = {
+            name: value for name, value in kwargs.items()
+            if _TEXT_INPUT_PATTERN.fullmatch(name)
+        }
         if TEXT_LIST is not None:
-            parts.extend(cls._string_items(TEXT_LIST, "TEXT_LIST"))
+            available["TEXT_LIST"] = TEXT_LIST
 
-        numbered = []
-        for name, value in kwargs.items():
-            match = _TEXT_INPUT_PATTERN.fullmatch(name)
-            if match is not None:
-                numbered.append((int(match.group(1)), name, value))
-        numbered.sort(key=lambda entry: entry[0])
-        for _, name, value in numbered:
-            parts.extend(cls._string_items(value, name))
-
+        parts = []
+        for name in cls._input_names_in_order(input_order, available):
+            parts.extend(cls._string_items(available[name], name))
         return (sep.join(parts),)

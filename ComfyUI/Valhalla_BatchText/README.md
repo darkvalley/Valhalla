@@ -1,4 +1,4 @@
-# Valhalla Batch Text v1.4.0 — English edition for ComfyUI
+# Valhalla Batch Text v1.5.1 — English edition for ComfyUI
 
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
@@ -7,7 +7,7 @@
 
 Batch Text joins an optional **native ComfyUI STRING list** and **any number of connected STRING inputs** into one `STRING` result. The join operation is performed in Python using `delimiter.join(parts)`.
 
-This is the English-language update of v1.3.0. **The node class remains `ValhallaBatchText`**, so existing connections and workflows can be retained. The dropdown labels, tooltips, Info popup, installer messages, and documentation are in English. Older Dutch dropdown values are translated on workflow load where possible.
+This release introduces reorderable input sockets while retaining the English interface and older-workflow compatibility. **The node class remains `ValhallaBatchText`**, so existing connections and workflows can be retained. The dropdown labels, tooltips, Info popup, installer messages, and documentation are in English. Older Dutch dropdown values are translated on workflow load where possible.
 
 ### Connectors
 
@@ -15,7 +15,30 @@ This is the English-language update of v1.3.0. **The node class remains `Valhall
 - **TEXT:0, TEXT:1, ...** — Ordinary STRING inputs. Connecting the last free input reveals another free input automatically. There is no hardcoded input limit; practical ComfyUI/browser limits still apply.
 - **TEXT** — A single combined STRING output.
 
-**Join order:** native `TEXT_LIST` items first, then `TEXT:0`, `TEXT:1`, etc. in numeric order. Unconnected inputs are ignored, but connected empty strings are included. Duplicate text is retained.
+**Join order:** the **current top-to-bottom order of the connected sockets**, including `TEXT_LIST` when present. Move any eligible input using the arrow controls beside the socket. A `TEXT_LIST` expands to its individual items at its position in this order. Unconnected inputs are ignored, but connected empty strings are included. Duplicate text is retained.
+
+## New in v1.5.1 — reorder inputs with arrow controls
+
+**The order shown on the node now determines the Python join order.** Use the small **up/down arrows drawn beside an input** to move it relative to the other inputs. This changes the **processing order**, not merely how the node looks.
+
+- `TEXT_LIST` is also movable; it no longer has to contribute its items first.
+- The existing cable **remains attached to the same source** when its socket moves. Numbered `TEXT:n` labels may be renumbered to reflect the new positions.
+- The last unconnected `TEXT:n` placeholder is reserved for new connections, not a prompt element.
+- The chosen order is saved in the workflow through a hidden `input_order` value and serialized for API execution. Do not edit this value manually.
+- Workflows saved with older node versions have a compatible fallback: `TEXT_LIST` first, then numbered `TEXT:n` slots.
+- The `delimiter` remains applied **between every item** of the joined sequence.
+
+**Example:** `TEXT:0 = A`, `TEXT_LIST = [L1, L2]`, `TEXT:1 = B`, with delimiter `Pipe (|)`.
+
+| Visual top-to-bottom order | Output |
+| --- | --- |
+| `TEXT_LIST`, `TEXT:0`, `TEXT:1` | `L1|L2|A|B` |
+| `TEXT:0`, `TEXT_LIST`, `TEXT:1` | `A|L1|L2|B` |
+| `TEXT:0`, `TEXT:1`, `TEXT_LIST` | `A|B|L1|L2` |
+
+![Reordering inputs demonstration](docs/images/05-reordering-inputs.svg)
+
+For more examples, see the [illustrated documentation](docs/README.md) or [reordering guide](docs/wiki/Reordering-Inputs.md).
 
 ## Delimiter dropdown
 
@@ -48,34 +71,32 @@ The **ⓘ Info** button opens an English help dialog, including examples, an exp
 
 Choose one method, with **ComfyUI fully stopped**:
 
-**Install from the Valhalla repository (recommended):** Clone to a temporary directory OUTSIDE `custom_nodes` and run the included installer. In Windows PowerShell:
+**Git installation (recommended)** — in your active ComfyUI `custom_nodes` directory:
 
-```powershell
-git clone https://github.com/darkvalley/Valhalla.git C:\TEMP\Valhalla
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\TEMP\Valhalla\ComfyUI\Valhalla_BatchText\Install-Valhalla-BatchText.ps1" -ComfyUIRoot "C:\PATH\TO\ComfyUI"
+```bash
+git clone https://github.com/darkvalley/ComfyUI-Valhalla-BatchText.git
 ```
 
-Change `-ComfyUIRoot` to your actual ComfyUI installation folder. The installer makes a backup **outside** `custom_nodes` so backups do not register duplicate nodes. Restart ComfyUI and hard-refresh with `Ctrl+Shift+R`.
+Restart ComfyUI and hard-refresh the web interface (Ctrl+Shift+R).
 
-**Manual installation:** Download the `darkvalley/Valhalla` repository as ZIP. Copy only its `ComfyUI/Valhalla_BatchText` folder into `ComfyUI/custom_nodes/Valhalla_BatchText/`. Do not put the whole Valhalla repository inside `custom_nodes`: the node must have `__init__.py` directly inside its own custom-node directory.
+**Manual installation** — download this repository as ZIP, extract it, and copy its content (including `__init__.py`, `batch_text.py` and `web/`) into one directory such as `ComfyUI/custom_nodes/ComfyUI-Valhalla-BatchText/`.
 
-**Upgrading from prior versions:** Stop ComfyUI, preserve a backup of your existing workflow and custom node, and replace the old `Valhalla_BatchText` folder. Do not leave another active copy under a different name, because duplicate registration can cause conflicts.
+**Upgrading from the earlier standalone ZIP release:** Back up workflows and delete or rename the **old** `custom_nodes/Valhalla_BatchText` folder before using a Git clone at `custom_nodes/ComfyUI-Valhalla-BatchText`. Do not keep both directories active: they register the same `ValhallaBatchText` class and frontend extension.
 
-The published folder layout is:
+Repository layout:
 
 ```text
-Valhalla/ComfyUI/Valhalla_BatchText/
+ComfyUI-Valhalla-BatchText/
 ├── __init__.py
 ├── batch_text.py
-├── web/js/batch_text.js
 ├── LICENSE
 ├── README.md
 ├── CHANGELOG.md
-├── Install-Valhalla-BatchText.ps1
+├── web/js/batch_text.js
 └── tests/
 ```
 
-No external Python packages are required.
+No external Python packages are required. This extension uses the same node class name as v1.0–v1.5.1.
 
 ## Compatibility with older workflows
 

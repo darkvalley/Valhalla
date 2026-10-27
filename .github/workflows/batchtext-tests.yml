@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Python tests
-        run: python -m unittest discover -s ComfyUI/Valhalla_BatchText/tests -p test_batch_text.py -v
-      - name: Simulated UI tests
+      - name: Python unit tests (including socket order)
+        run: python -m unittest discover -s ComfyUI/Valhalla_BatchText/tests -p 'test_*.py' -v
+      - name: Simulated ComfyUI frontend UI tests
         run: node ComfyUI/Valhalla_BatchText/tests/test_dynamic_ui.cjs

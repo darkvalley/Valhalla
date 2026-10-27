@@ -1,6 +1,6 @@
 /**
- * Valhalla Batch Text v1.4.0 — native STRING_LIST processing plus dynamic STRING inputs,
- * conditional Custom text field and help popup.
+ * Valhalla Batch Text v1.5.1 — reorderable input sockets (including native
+ * TEXT_LIST), dynamic TEXT:n inputs, custom delimiters, and help popup.
  * Joining is performed in Python. © 2026 Werner de Jong. MIT License.
  */
 import { app } from "../../scripts/app.js";
@@ -14,6 +14,7 @@ const INPUT_TYPE = "STRING";
 // square connector and the list glyph distinguish TEXT_LIST in the UI.
 const LIST_INPUT_NAME = "TEXT_LIST";
 const LIST_ICON = "☷";
+const ORDER_WIDGET_NAME = "input_order";
 const HELP_WIDGET_NAME = "ⓘ  Info";
 const INFO_STYLE_ID = "valhalla-batch-text-info-styles";
 const CUSTOM_OPTION = "Custom";
@@ -128,10 +129,231 @@ function updateInputs(node) {
       input.type = INPUT_TYPE;
     });
     node.addInput(`${PREFIX}${active.length}`, INPUT_TYPE);
+    hideOrderWidget(node);
+    syncOrderWidget(node);
     resizeNode(node);
   } finally {
     node.__valhallaBatchTextUpdating = false;
   }
+}
+
+// The input_order widget is supplied by the Python schema, saved in the
+// workflow and sent with the API prompt. The widget stays hidden; physical
+// socket positions and link target_slot indices are the user-facing control.
+function orderWidget(node) {
+  return (node.widgets ?? []).find((w) => w.name === ORDER_WIDGET_NAME);
+}
+
+// v1.5.0 assumed every ComfyUI frontend exposed the *optional* input_order
+// STRING as a widget. Some installations do not: the arrow controls worked,
+// but the Python node never received input_order and used its legacy default
+// (TEXT_LIST first). Always install a real, prompt-serializable widget.
+function ensureOrderWidget(node) {
+  let widget = orderWidget(node);
+  if (!widget) {
+    widget = node.addWidget?.("text", ORDER_WIDGET_NAME, "", null, {
+      serialize: true,
+    });
+  }
+  if (!widget) return null;
+
+  widget.options ??= {};
+  // API prompt and workflow persistence have DIFFERENT serialize flags.
+  widget.serialize = true;
+  widget.options.serialize = true;
+  widget.hidden = true;
+  widget.options.hidden = true;
+  widget.tooltip = "Automatically generated from the visual order of the sockets";
+
+  // ComfyUI's graphToPrompt uses widget.serializeValue, if supplied. It runs
+  // at queue time. Compute from live socket order instead of depending on
+  // whether a previous drag/click fired a widget-change callback.
+  widget.serializeValue = () => {
+    const order = JSON.stringify(movableInputs(node).map(({ input }) => input.name));
+    widget.value = order;
+    return order;
+  };
+  return widget;
+}
+
+function hideOrderWidget(node) {
+  ensureOrderWidget(node);
+}
+
+function movableInputs(node) {
+  return (node.inputs ?? [])
+    .map((input, slot) => ({ input, slot }))
+    .filter(({ input }) => input.name === LIST_INPUT_NAME ||
+      (numberedInput(input.name) && connected(input)));
+}
+
+function syncOrderWidget(node) {
+  const widget = ensureOrderWidget(node);
+  if (widget) widget.serializeValue();
+}
+
+// When moving sockets, keep the underlying LiteGraph links attached to the
+// same input *objects*, updating each attached link's target_slot index.
+// Swapping visual rows without doing this silently rewires a workflow.
+function getGraphLink(graph, linkId) {
+  if (!graph?.links) return undefined;
+  if (typeof graph.links.get === "function") return graph.links.get(linkId);
+  return graph.links[linkId];
+}
+
+function moveSocket(node, index, direction) {
+  const movable = movableInputs(node);
+  const at = movable.findIndex(({ slot }) => slot === index);
+  const next = at + direction;
+  if (at < 0 || next < 0 || next >= movable.length) return false;
+  const otherIndex = movable[next].slot;
+  const original = node.inputs[index];
+  node.inputs[index] = node.inputs[otherIndex];
+  node.inputs[otherIndex] = original;
+  // Update EVERY linked input on this node, not only the moved sockets.
+  // This also supports older workflows with stored node connections.
+  for (let slot = 0; slot < node.inputs.length; slot++) {
+    const linkId = node.inputs[slot]?.link;
+    if (linkId === null || linkId === undefined) continue;
+    const link = getGraphLink(node.graph, linkId);
+    if (link) link.target_slot = slot;
+  }
+  // Rename numbered inputs according to their NEW physical order; names stay
+  // unique while the input objects keep their original link IDs.
+  let nextNumber = 0;
+  for (const input of node.inputs) {
+    if (!numberedInput(input.name)) continue;
+    input.name = `${PREFIX}${nextNumber}`;
+    input.label = input.name;
+    nextNumber++;
+  }
+  syncOrderWidget(node);
+  resizeNode(node);
+  if (node.graph) {
+    node.graph._version = (node.graph._version ?? 0) + 1;
+    node.graph.setDirtyCanvas?.(true, true);
+  }
+  node.setDirtyCanvas?.(true, true);
+  return true;
+}
+
+// Use getConnectionPos so buttons line up with sockets even when a frontend
+// theme changes LiteGraph's slot offset or layout.
+function slotRowY(node, slot) {
+  if (typeof node.getConnectionPos === "function") {
+    const p = node.getConnectionPos(true, slot);
+    if (p && Number.isFinite(p[1])) return p[1] - (node.pos?.[1] ?? 0);
+  }
+  return 32 + (slot + 1) * SLOT_HEIGHT;
+}
+
+function arrowPositions(node) {
+  const width = node.size?.[0] ?? 230;
+  const downX = Math.max(120, Math.round(width * 0.53));
+  const upX = Math.min(width - 43, Math.max(downX + 25, Math.round(width * 0.63)));
+  return { downX, upX, radius: Math.min(18, Math.max(11, width * 0.034)) };
+}
+
+function arrowHit(node, point) {
+  if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
+  const { downX, upX, radius } = arrowPositions(node);
+  const movable = movableInputs(node);
+  for (let orderIndex = 0; orderIndex < movable.length; orderIndex++) {
+    const { slot } = movable[orderIndex];
+    const y = slotRowY(node, slot);
+    if (Math.abs(point[1] - y) > Math.max(radius, 12)) continue;
+    if (orderIndex < movable.length - 1 && Math.abs(point[0] - downX) < radius + 3) {
+      return { slot, direction: 1 };
+    }
+    if (orderIndex > 0 && Math.abs(point[0] - upX) < radius + 3) {
+      return { slot, direction: -1 };
+    }
+  }
+  return null;
+}
+
+function drawArrow(ctx, x, y, r, direction, hovered) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (direction === -1) ctx.rotate(Math.PI);
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.43, -r * 0.75);
+  ctx.lineTo(r * 0.43, -r * 0.75);
+  ctx.lineTo(r * 0.43, 0);
+  ctx.lineTo(r * 0.85, 0);
+  ctx.lineTo(0, r * 0.82);
+  ctx.lineTo(-r * 0.85, 0);
+  ctx.lineTo(-r * 0.43, 0);
+  ctx.closePath();
+  ctx.fillStyle = hovered ? "#ffffff" : "#c6d0dc";
+  ctx.strokeStyle = "#10141a";
+  ctx.lineWidth = Math.max(1.3, r * 0.18);
+  ctx.lineJoin = "round";
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawOrderControls(node, ctx) {
+  if (!ctx || node.flags?.collapsed) return;
+  const movable = movableInputs(node);
+  if (movable.length < 2) return;
+  const { downX, upX, radius } = arrowPositions(node);
+  for (let orderIndex = 0; orderIndex < movable.length; orderIndex++) {
+    const { slot } = movable[orderIndex];
+    const y = slotRowY(node, slot);
+    if (orderIndex < movable.length - 1) {
+      drawArrow(ctx, downX, y, radius, 1,
+        node.__valhallaBatchTextHover?.slot === slot &&
+        node.__valhallaBatchTextHover?.direction === 1);
+    }
+    if (orderIndex > 0) {
+      drawArrow(ctx, upX, y, radius, -1,
+        node.__valhallaBatchTextHover?.slot === slot &&
+        node.__valhallaBatchTextHover?.direction === -1);
+    }
+  }
+}
+
+function installOrderControls(node) {
+  if (node.__valhallaBatchTextOrderInstalled) return;
+  node.__valhallaBatchTextOrderInstalled = true;
+  hideOrderWidget(node);
+  const oldSerialize = node.onSerialize;
+  node.onSerialize = function (...args) {
+    syncOrderWidget(this);
+    return oldSerialize?.apply(this, args);
+  };
+  const oldDraw = node.onDrawForeground;
+  node.onDrawForeground = function(ctx, ...args) {
+    const result = oldDraw?.call(this, ctx, ...args);
+    drawOrderControls(this, ctx);
+    return result;
+  };
+  const oldMouseDown = node.onMouseDown;
+  node.onMouseDown = function(event, pos, ...args) {
+    if (event?.button === undefined || event.button === 0) {
+      const hit = arrowHit(this, pos);
+      if (hit && moveSocket(this, hit.slot, hit.direction)) return true;
+    }
+    return oldMouseDown?.call(this, event, pos, ...args);
+  };
+  const oldMouseMove = node.onMouseMove;
+  node.onMouseMove = function(event, pos, ...args) {
+    const next = arrowHit(this, pos);
+    const old = this.__valhallaBatchTextHover;
+    if (next?.slot !== old?.slot || next?.direction !== old?.direction) {
+      this.__valhallaBatchTextHover = next;
+      this.setDirtyCanvas?.(true, false);
+    }
+    return oldMouseMove?.call(this, event, pos, ...args);
+  };
+  const oldMouseLeave = node.onMouseLeave;
+  node.onMouseLeave = function(...args) {
+    this.__valhallaBatchTextHover = null;
+    this.setDirtyCanvas?.(true, false);
+    return oldMouseLeave?.apply(this, args);
+  };
 }
 
 function scheduleUpdate(node) {
@@ -268,15 +490,16 @@ function showInfoDialog() {
   dialog.innerHTML = `
     <div class="vb-content">
       <h2>ⓘ Batch Text</h2>
-      <p class="vb-muted">Valhalla's Calling · v1.4.0</p>
+      <p class="vb-muted">Valhalla's Calling · v1.5.1</p>
       <p>Combine an optional native ComfyUI text list and any number of individual text inputs into a single <code>STRING</code> output.</p>
       <h3>Inputs</h3>
       <p><strong>☷ TEXT_LIST:</strong> A square socket for a native ComfyUI STRING list (<code>OUTPUT_IS_LIST=True</code> at the source). It does not accept arbitrary image batches or object types. A multiline STRING remains a single text item; it is not split at line breaks.</p>
       <p><strong>TEXT:0, TEXT:1, ...:</strong> Regular STRING inputs. Connecting the last available input automatically adds another one. Disconnecting an input removes unused sockets while retaining one free socket.</p>
-      <p><strong>Join order:</strong> All items from <code>TEXT_LIST</code> first (if connected), then <code>TEXT:0</code>, <code>TEXT:1</code>, and so on in numeric order.</p>
+      <p><strong>Join order:</strong> The vertical order of the connected sockets, top to bottom. Use the down and up arrows beside each input to move it while retaining its cable.</p>
       <h3>How to use</h3>
       <ol>
         <li>Connect a native text list to <code>☷ TEXT_LIST</code>, individual strings to the <code>TEXT:n</code> inputs, or both.</li>
+        <li>Click an arrow beside a connected input to move that socket up or down. The connected cable moves with its socket; save the workflow to retain the order.</li>
         <li>Select the separator using the <code>delimiter</code> dropdown.</li>
         <li>Select <code>Custom</code> to show <code>custom_delimiter</code>. Enter any text, punctuation, emoji, multiple characters, or actual line breaks.</li>
         <li>Select <code>None (direct)</code> to join the texts with no separator.</li>
@@ -344,6 +567,9 @@ app.registerExtension({
   nodeCreated(node) {
     if (node.comfyClass !== NODE_CLASS && node.type !== NODE_CLASS) return;
     initializeDelimiterWidgets(node);
+    // Always create the hidden order widget BEFORE the nonserializable Info
+    // button, including when loading a workflow saved with an older version.
+    installOrderControls(node);
     addInfoButton(node);
 
     const oldConnectionsChanged = node.onConnectionsChange;

@@ -79,14 +79,15 @@ assert.equal(node.inputs[0].type, 'STRING');
 assert.equal(node.inputs[0].shape, 1, 'list socket uses square connector');
 assert.ok(node.inputs[0].label.includes('☷'), 'list marker must be visible');
 assert.equal(node.widgets[1].hidden,true,'Custom field hidden for preset');
-assert.equal(node.widgets.length,3);
+assert.equal(node.widgets.length,4);
+assert.ok(node.widgets.some(w => w.name === 'input_order' && w.hidden));
 node.widgets[0].value='Custom'; node.widgets[0].callback(node.widgets[0].value);
 assert.equal(node.widgets[1].hidden,false,'Custom field visible when selected');
 node.widgets[1].value='🎄';
 node.widgets[0].value='LF (\\n)';node.widgets[0].callback(node.widgets[0].value);
 assert.equal(node.widgets[1].hidden,true,'Custom field hidden again');
 assert.equal(node.widgets[1].value,'🎄','Custom content preserved while hidden');
-const info=node.widgets[2];
+const info=node.widgets.find(w => w.name === "ⓘ  Info");
 assert.equal(info.type,'button');
 assert.equal(info.serialize,false);assert.equal(info.options.serialize,false);
 info.callback();
@@ -159,4 +160,29 @@ assert.deepEqual(listOnly.inputs.map(i=>i.name), ['TEXT_LIST','TEXT:0']);
 assertNoWidgetOverlap(listOnly);
 listOnly.inputs[0].link=null; listOnly.onConnectionsChange(1,0,false); flush();
 assert.deepEqual(listOnly.inputs.map(i=>i.name), ['TEXT_LIST','TEXT:0']);
-console.log('OK: English UI, Dutch migration, list port, dynamic inputs, spacing, restore 100+, preset and help popup');
+
+// v1.5.1: clicking the down arrow must change the serialized Python order,
+// while retaining the original connected source cables/target slots.
+const reorder=mockNode();
+reorder.graph.links = {
+  201: {target_slot:0}, 202:{target_slot:1}, 203:{target_slot:2},
+};
+extension.nodeCreated(reorder);flush();
+reorder.inputs.find(i=>i.name==='TEXT_LIST').link=201;
+reorder.inputs.find(i=>i.name==='TEXT:0').link=202;
+reorder.onConnectionsChange(1,1,true);flush();
+reorder.inputs.find(i=>i.name==='TEXT:1').link=203;
+reorder.onConnectionsChange(1,2,true);flush();
+const orderField = reorder.widgets.find(w=>w.name==='input_order');
+assert.ok(orderField && orderField.hidden && orderField.serialize);
+assert.equal(orderField.serializeValue(),'["TEXT_LIST","TEXT:0","TEXT:1"]');
+// First row is slot index 0, fallback Y=32+(0+1)*20; down arrow x=round(240*.53).
+assert.equal(reorder.onMouseDown({button:0},[127,52]), true);
+assert.deepEqual(reorder.inputs.map(i=>i.name),['TEXT:0','TEXT_LIST','TEXT:1','TEXT:2']);
+assert.equal(orderField.serializeValue(),'["TEXT:0","TEXT_LIST","TEXT:1"]');
+assert.deepEqual([reorder.graph.links[201].target_slot,reorder.graph.links[202].target_slot,reorder.graph.links[203].target_slot],[1,0,2]);
+assert.equal(reorder.inputs[0].link,202);
+assert.equal(reorder.inputs[1].link,201);
+assertNoWidgetOverlap(reorder);
+
+console.log('OK: v1.5.1 English UI, arrow reordering, stable link slots, saveable order, and legacy compatibility');

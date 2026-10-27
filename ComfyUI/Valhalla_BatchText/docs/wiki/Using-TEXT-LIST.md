@@ -1,12 +1,10 @@
 # Using TEXT_LIST
 
-A *native ComfyUI list* is not the same as one `STRING` containing newline characters. `TEXT_LIST` is designed for node outputs that produce a list of `STRING` values (for example, via `OUTPUT_IS_LIST = (True,)`). Batch Text receives and joins those values.
+`TEXT_LIST` is a special **native ComfyUI list input** for `STRING` data. It is not a general Python object or image list socket, and a multiline `STRING` remains one string.
 
-![Using TEXT_LIST](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/02-using-text-list.svg)
+![Native list example](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/02-using-text-list.svg)
 
-## Example
-
-If a compatible node outputs `['face.png', 'body.png', 'wardrobe.png']`, connect its `STRING` output to `TEXT_LIST` and select `LF (\n)`. Batch Text returns one string with the three paths on separate lines.
+A source producing a native list `['face.png', 'body.png', 'wardrobe.png']`, together with delimiter `LF (\n)`, produces:
 
 ```text
 face.png
@@ -14,13 +12,8 @@ body.png
 wardrobe.png
 ```
 
-**Do not assume** a source node output is a native list merely because its preview contains several lines. A multiline `STRING` is still one element. Consult the source node definition or test it.
+You may also connect individual strings to `TEXT:n` sockets. **In v1.5.1, place TEXT_LIST anywhere in the input order using the arrows.** The list items are joined at that position, rather than always before the other connected text inputs.
 
-## Compatibility
+To check whether an upstream node really emits a native list, consult its definition or verify its output. `TEXT_LIST` expects native ComfyUI `STRING` values, not arbitrary custom objects. The node does not remove duplicates.
 
-- `TEXT_LIST` accepts ComfyUI `STRING` connections. It is **not** a universal converter for arbitrary Python objects, JSON arrays or image batches.
-- For JSON containing a list of strings, use a separate parsing/conversion step first.
-- Use the numbered `TEXT:n` inputs for ordinary independent pieces of text.
-- Batch Text does not remove duplicates or filter missing paths.
-
-[Next: Combining Inputs and Delimiters](https://github.com/darkvalley/Valhalla/wiki/Combining-Inputs-and-Delimiters)
+[See input ordering examples](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs).

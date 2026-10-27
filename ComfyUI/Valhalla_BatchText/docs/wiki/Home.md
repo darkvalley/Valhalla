@@ -1,22 +1,21 @@
-# Valhalla Batch Text — Wiki
+# Valhalla Batch Text v1.5.1 — Wiki
 
-**ComfyUI custom node • v1.4.0 • Conceived and created by Werner de Jong • MIT License**
+**ComfyUI • Conceived and created by Werner de Jong • © 2026 • MIT License**
 
-Batch Text merges an optional native ComfyUI `STRING` list and any number of individual `STRING` connections into **one `STRING` output**. You control how the elements are separated using a delimiter dropdown or a custom string.
+Batch Text joins any number of `STRING` inputs and an optional native `STRING` list into a **single text output**, using a selectable delimiter.
 
-![Overview of Valhalla Batch Text](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
+**New in v1.5.1:** change the actual processing order using the **up/down arrows** next to input sockets. The cables stay attached and the order is saved in the workflow.
 
-## Start here
+![Batch Text node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
 
-- [Batch Text — Overview](https://github.com/darkvalley/Valhalla/wiki/Batch-Text) — sockets, node behavior and join order
-- [Using TEXT_LIST](https://github.com/darkvalley/Valhalla/wiki/Using-TEXT-LIST) — native lists vs. multiline text
-- [Combining Inputs and Delimiters](https://github.com/darkvalley/Valhalla/wiki/Combining-Inputs-and-Delimiters) — examples, presets and custom separators
-- [Installation and Troubleshooting](https://github.com/darkvalley/Valhalla/wiki/Installation-and-Troubleshooting) — Windows installation, upgrading and fixes
+## Documentation
 
-## Quick example
+- [Batch Text — Overview](https://github.com/darkvalley/Valhalla/wiki/Batch-Text)
+- [Reordering Inputs](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs) — **new in v1.5.1**
+- [Using TEXT_LIST](https://github.com/darkvalley/Valhalla/wiki/Using-TEXT-LIST)
+- [Combining Inputs and Delimiters](https://github.com/darkvalley/Valhalla/wiki/Combining-Inputs-and-Delimiters)
+- [Installation and Troubleshooting](https://github.com/darkvalley/Valhalla/wiki/Installation-and-Troubleshooting)
 
-Connect `TEXT:0 = Mara` and `TEXT:1 = Greek dress`, then select `Comma (, )`. The output is `Mara, Greek dress`. With `Blank line (\n\n)` the two pieces of text are separated by an empty line.
+**Source code:** [Valhalla Batch Text](https://github.com/darkvalley/Valhalla/tree/main/ComfyUI/Valhalla_BatchText) · [MIT license](https://github.com/darkvalley/Valhalla/blob/main/ComfyUI/Valhalla_BatchText/LICENSE).
 
-**Source:** [Valhalla Batch Text folder](https://github.com/darkvalley/Valhalla/tree/main/ComfyUI/Valhalla_BatchText) · [MIT license](https://github.com/darkvalley/Valhalla/blob/main/ComfyUI/Valhalla_BatchText/LICENSE)
-
-> **Image note:** Diagrams are explanatory illustrations, not live ComfyUI screenshots. Example source node names illustrate data types and are not required dependencies.
+*The diagrams illustrate the actual socket names and ordering rules; they are documentation diagrams, not live screenshots.*

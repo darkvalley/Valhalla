@@ -1,46 +1,32 @@
 # Combining Inputs and Delimiters
 
-![Combining list and manual inputs](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/03-combining-inputs.svg)
+![Combined text example](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/03-combining-inputs.svg)
 
-## Example: Reference paths plus instructions
+## Mixed input example
 
-Provide a native list through `TEXT_LIST`:
+Connect `TEXT:0 = A`, `TEXT_LIST = [L1, L2]`, and `TEXT:1 = B`. Use the arrows to put `TEXT_LIST` between the other two sockets and select `Pipe (|)`. The output is **`A|L1|L2|B`**. Change the order and the actual output changes.
 
-```text
-face.png
-body.png
-```
+Use `Blank line (\n\n)` when separating larger prompt sections. **This delimiter also separates list elements from one another.** If you need different separators within a list than between groups, first join the list separately.
 
-Provide additional instructions through `TEXT:0`:
+![Delimiter presets](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/04-delimiter-presets.svg)
 
-```text
-REFERENCE IMAGE RULES
-Preserve facial identity.
-Preserve body proportions.
-```
+## Available options
 
-Choose **Blank line (`\n\n`)** to produce one output containing the listed paths followed by a blank line and the instructions. List items always come first, followed by `TEXT:0`, `TEXT:1`, etc.
-
-![Delimiter options](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/04-delimiter-presets.svg)
-
-## Common delimiter presets
-
-| Preset | Actual separator |
+| Setting | Separator |
 | --- | --- |
-| None (direct) | empty string |
-| Space | ` ` |
-| Comma | `, ` or `,` |
-| Semicolon | `; ` or `;` |
-| Pipe | ` \| ` or `\|` |
-| Tab | `\t` |
-| LF | `\n` |
-| CR | `\r` |
-| CRLF | `\r\n` |
-| Blank line | `\n\n` |
-| Custom | Any supplied text |
+| `None (direct)` | Empty string |
+| `Space ( )` | One space |
+| `Comma (, )` / `Comma (,)` | Comma with / without trailing space |
+| `Semicolon` / `Colon` / `Pipe` | The visible symbols, with or without spaces |
+| `Tab (\t)` | Tab character |
+| `LF (\n)` | Line feed |
+| `CR (\r)` | Carriage return |
+| `CRLF (\r\n)` | Windows line ending |
+| `Blank line (\n\n)` | Two line feeds |
+| `Custom` | Any literal text or supported escape sequence |
 
-### Custom delimiters
+**Custom:** entering `\n`, `\r`, `\t`, or `\\` produces line feed, carriage return, tab, or backslash. Other literal characters (including emoji) are also supported.
 
-Selecting **Custom** reveals `custom_delimiter`. Enter arbitrary text, emoji, actual line breaks or supported escapes: `\n`, `\r`, `\t` and `\\`. Empty Custom joins directly. The actual Python separator is used (e.g. `CRLF` is the two control characters `\r\n`, not printed backslash characters).
+## Order matters
 
-**Tip:** `Blank line` is often helpful for separating prompts, reference instructions and other blocks. It also inserts that delimiter *between list elements*, not only between major groups. If you need different separators within and between groups, join each group separately and then join those results.
+See [Reordering Inputs](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs). The arrows move the connected sockets and keep their cables, and the saved top-to-bottom order is passed to Python.

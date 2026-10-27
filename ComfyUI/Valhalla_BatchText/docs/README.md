@@ -1,9 +1,14 @@
-# Batch Text — documentation and Wiki source
+# Valhalla Batch Text v1.5.1 — Illustrated documentation
 
-**[Start with the documentation Home](wiki/Home.md)** · [Installation](wiki/Installation-and-Troubleshooting.md) · [Examples](wiki/Combining-Inputs-and-Delimiters.md)
+The complete English user guide and five editable SVG diagrams are in this folder.
 
-Four vector illustrations (SVG) are in [`images/`](images/). These render crisply when zoomed.
+- [Wiki Home](wiki/Home.md)
+- [Reordering Inputs — NEW](wiki/Reordering-Inputs.md)
+- [Using TEXT_LIST](wiki/Using-TEXT-LIST.md)
+- [Combining Inputs and Delimiters](wiki/Combining-Inputs-and-Delimiters.md)
+- [Installation and Troubleshooting](wiki/Installation-and-Troubleshooting.md)
+- [Wiki publishing instructions](wiki/README-PUBLISH.md)
 
-GitHub Wiki pages are stored in a different Git repository. To publish the content to `https://github.com/darkvalley/Valhalla/wiki`, follow [`wiki/README-PUBLISH.md`](wiki/README-PUBLISH.md).
+**Note:** The GitHub Wiki is a separate Git repository. The files in `docs/wiki` are the ready-to-publish source; updating them in the main repository does not automatically update the Wiki tab.
 
 © 2026 Werner de Jong · MIT License.

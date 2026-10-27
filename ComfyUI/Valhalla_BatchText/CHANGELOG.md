@@ -1,3 +1,12 @@
+# v1.5.1 — Reorderable Inputs (27 October 2026)
+
+- Add up/down controls for changing the top-to-bottom processing order of connected `TEXT:n` inputs and `TEXT_LIST`.
+- Preserve attached cables while moving sockets and update the stored LiteGraph `target_slot` pointers.
+- Persist the actual join order in the hidden, prompt-serializable `input_order` value (v1.5.1 fix).
+- Preserve old workflows using a compatible default order when no saved order is present.
+- Keep the delimiter dropdown, dynamic input generation, native `TEXT_LIST` support and English Info popup.
+- Add regression tests for reordered output, saved order, and stable source links.
+
 # Changelog — Valhalla Batch Text
 
 ## v1.4.0 — English user interface (2026-10-27)

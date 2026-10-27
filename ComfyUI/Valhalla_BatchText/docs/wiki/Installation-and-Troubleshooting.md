@@ -1,34 +1,31 @@
-# Installation and Troubleshooting
+# Installation and Troubleshooting — v1.5.1
 
-## Windows installation
+## Manual installation (Windows)
 
-1. Shut down ComfyUI completely.
-2. Download or clone [darkvalley/Valhalla](https://github.com/darkvalley/Valhalla) **outside** ComfyUI's `custom_nodes` folder.
-3. Copy only `ComfyUI/Valhalla_BatchText/` to `<ComfyUI>/custom_nodes/Valhalla_BatchText/`. The custom node directory must contain `__init__.py`.
-4. Restart ComfyUI, then hard-refresh the browser (`Ctrl+Shift+R`).
-5. Search the Add Node menu for **Batch Text** (category `Valhalla's Calling`).
+1. Stop ComfyUI completely.
+2. Download [darkvalley/Valhalla](https://github.com/darkvalley/Valhalla) outside the ComfyUI `custom_nodes` directory.
+3. Copy only `ComfyUI/Valhalla_BatchText` into `custom_nodes/Valhalla_BatchText` of your ComfyUI installation, replacing the older version (back it up first).
+4. Restart ComfyUI, then use `Ctrl+Shift+R` in your browser.
+5. Add the `Batch Text` node under `Valhalla's Calling/Text`.
 
-Alternatively, run `Install-Valhalla-BatchText.ps1` from the node's published folder, passing your actual ComfyUI root via `-ComfyUIRoot`. The script backs up a previous installation outside `custom_nodes`.
+The custom node folder should contain `__init__.py`, `batch_text.py`, and `web/js/batch_text.js`. Do not copy the whole Valhalla repository into `custom_nodes`. No additional Python packages are needed.
 
-```powershell
-git clone https://github.com/darkvalley/Valhalla.git C:\TEMP\Valhalla
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\TEMP\Valhalla\ComfyUI\Valhalla_BatchText\Install-Valhalla-BatchText.ps1' -ComfyUIRoot 'C:\PATH\TO\ComfyUI'
-```
+The optional included PowerShell installer may be run from the source directory using the actual `-ComfyUIRoot` path.
 
 ## Troubleshooting
 
-**Node does not appear:** Verify the installation folder contains `__init__.py` directly. Restart ComfyUI and refresh the browser cache.
+**No arrows / old interface:** confirm the installed files come from v1.5.1, restart ComfyUI and hard-refresh. Check that you do not have multiple installed copies of the node.
 
-**Delimiter and Info button overlap sockets:** Confirm that only the latest JS extension is installed, remove duplicate copies of the custom node, restart and hard-refresh.
+**Sockets move but output still has the old order:** v1.5.0 could fail to serialize the order on some frontends. Use **v1.5.1**, which provides the hidden `input_order` widget explicitly. Save a fresh workflow and test again.
 
-**Double paths or instructions in output:** Check whether two inputs contain the same text. Batch Text preserves duplicates by design.
+**Inputs seem to change:** numbered `TEXT:n` ports may be renumbered after a move. Their cables remain connected to the original source.
 
-**TEXT_LIST produces surprising results:** Check whether upstream node emits a native ComfyUI STRING list or one multiline STRING. The two are different.
+**Info or delimiter overlaps inputs:** remove duplicate outdated extensions, restart and hard refresh.
 
-**Old Dutch labels:** Version 1.4 migrates supported previous selections; if a preset displays incorrectly, select its English equivalent and save a fresh workflow copy.
+**Output duplicates text:** Batch Text does not deduplicate. Check whether identical strings are connected more than once.
 
-**No external Python dependencies are required.** The frontend extension is bundled with the node.
+**Unexpected TEXT_LIST result:** a multiline string and a native ComfyUI list are not interchangeable.
 
-## Source and license
+## Attribution
 
-[Source code and original README](https://github.com/darkvalley/Valhalla/tree/main/ComfyUI/Valhalla_BatchText) · [MIT License](https://github.com/darkvalley/Valhalla/blob/main/ComfyUI/Valhalla_BatchText/LICENSE)
+Conceived and created by Werner de Jong. © 2026. MIT License.
