@@ -1,0 +1,53 @@
+name: Publish Valhalla Batch Text Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ComfyUI/Valhalla_BatchText/docs/wiki/**'
+      - '.github/workflows/publish-batchtext-wiki.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Wiki source files
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Synchronize Wiki Markdown pages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          src="ComfyUI/Valhalla_BatchText/docs/wiki"
+          pages=(Home.md Batch-Text.md Reordering-Inputs.md Using-TEXT-LIST.md Combining-Inputs-and-Delimiters.md Installation-and-Troubleshooting.md _Sidebar.md)
+          for page in "${pages[@]}"; do
+            test -f "${src}/${page}" || { echo "Missing source: ${src}/${page}" >&2; exit 1; }
+          done
+
+          # GitHub Wiki repositories sometimes require creating their first Home page
+          # on GitHub before the Git remote becomes accessible.
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_TOKEN}" | base64 -w 0)"
+          wiki_url="https://github.com/${GITHUB_REPOSITORY}.wiki.git"
+          if ! git -c "http.https://github.com/.extraheader=${auth}" clone --quiet "${wiki_url}" wiki; then
+            echo '::error::Cannot clone the Wiki. Open the repository Wiki tab, save its first Home page, then rerun this workflow.'
+            exit 1
+          fi
+
+          cp -- "${pages[@]/#/${src}/}" wiki/
+          git -C wiki config user.name 'github-actions[bot]'
+          git -C wiki config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C wiki add -- "${pages[@]}"
+          if git -C wiki diff --cached --quiet; then
+            echo 'Wiki pages already up to date.'
+            exit 0
+          fi
+          git -C wiki commit -m 'Publish Batch Text v1.5.3 wiki documentation'
+          git -c "http.https://github.com/.extraheader=${auth}" -C wiki push origin HEAD
