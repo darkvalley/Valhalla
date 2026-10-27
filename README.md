@@ -7,6 +7,8 @@ This repository hosts open-source components developed for the **Valhalla** crea
 A custom ComfyUI node that concatenates an optional native `STRING` list and unlimited dynamic individual text inputs, with a delimiter dropdown, custom separators, and in-node help.
 
 **[Source code, installation and English documentation](ComfyUI/Valhalla_BatchText/README.md)**
+**[Illustrated Batch Text user guide and GitHub Wiki source](ComfyUI/Valhalla_BatchText/docs/README.md)** — diagrams, examples, installation help, and a Wiki publishing script.
+
 
 **Created by Werner de Jong.** © 2026 Werner de Jong. MIT License. The node has its own [`LICENSE`](ComfyUI/Valhalla_BatchText/LICENSE).
 
