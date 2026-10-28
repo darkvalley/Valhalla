@@ -1,15 +1,15 @@
-# Valhalla Batch Text v1.5.3 — English edition for ComfyUI
+# Valhalla Batch Text v1.5.4 — English edition for ComfyUI
 
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
 
-**[Download the official v1.5.3 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.3)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.3/Valhalla_BatchText_v1.5.3.zip)
+**[Download the official v1.5.4 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.4/Valhalla_BatchText_v1.5.4.zip)
 
 ## Overview
 
 Batch Text joins an optional **native ComfyUI STRING list** and **any number of connected STRING inputs** into one `STRING` result. The join operation is performed in Python using `delimiter.join(parts)`.
 
-This release corrects link endpoints during input reordering while retaining the English interface and older-workflow compatibility. **The node class remains `ValhallaBatchText`**, so existing connections and workflows can be retained. The dropdown labels, tooltips, Info popup, installer messages, and documentation are in English. Older Dutch dropdown values are translated on workflow load where possible.
+This release fixes issue #1: the selected port order and its cables now persist after ComfyUI restart and workflow reload, while retaining the English interface and older-workflow compatibility. **The node class remains `ValhallaBatchText`**, so existing connections and workflows can be retained. The dropdown labels, tooltips, Info popup, installer messages, and documentation are in English. Older Dutch dropdown values are translated on workflow load where possible.
 
 ### Connectors
 
@@ -19,18 +19,18 @@ This release corrects link endpoints during input reordering while retaining the
 
 **Join order:** the **current top-to-bottom order of the connected sockets**, including `TEXT_LIST` when present. Move any eligible input using the arrow controls beside the socket. A `TEXT_LIST` expands to its individual items at its position in this order. Unconnected inputs are ignored, but connected empty strings are included. Duplicate text is retained.
 
-## Reordering inputs — v1.5.3 cable-follow fix
+## Reordering inputs — v1.5.4 persistence fix
 
 **The order shown on the node determines the Python join order.** Every input row has a matching pair of outlined **↑ / ↓ buttons**.
 
-**v1.5.3 cable fix:** When moving a connected socket, the **existing cable endpoint visibly moves with that named socket**. Connections are not recreated, and source links/reroutes are preserved. To swap two connected rows safely, the extension temporarily moves one link endpoint into the spare unconnected `TEXT:n` slot before completing the swap. This accommodates current ComfyUI versions that reject reassigning a link to an already-occupied input. It also works with earlier LiteGraph implementations. The `input_order` value updates to match the resulting vertical positions.
+**v1.5.3 cable fix (retained in v1.5.4):** When moving a connected socket, the **existing cable endpoint visibly moves with that named socket**. Connections are not recreated, and source links/reroutes are preserved. To swap two connected rows safely, the extension temporarily moves one link endpoint into the spare unconnected `TEXT:n` slot before completing the swap. This accommodates current ComfyUI versions that reject reassigning a link to an already-occupied input. It also works with earlier LiteGraph implementations. The `input_order` value updates to match the resulting vertical positions.
 
-**Validated release:** The cable-follow fix passed automated Python and simulated legacy/modern ComfyUI frontend tests, and was confirmed working in a local ComfyUI workflow by the project owner on 27 October 2026. Click an enabled arrow on a connected socket to move it relative to other inputs. This changes the **processing order**, not merely how the node looks.
+**Validated release:** The v1.5.4 workflow-reload fix was confirmed working by the project owner on 28 October 2026. Automated Python, frontend and restart-persistence simulation tests also passed. Click an enabled arrow on a connected socket to move it relative to other inputs. This changes the **processing order**, not merely how the node looks.
 
 - `TEXT_LIST` is also movable; it no longer has to contribute its items first.
 - The existing cable **remains attached to the same source** when its socket moves. Connected numbered sockets **keep their own `TEXT:n` labels** when moved. For example, `TEXT:1` can appear above `TEXT:0` without changing either cable.
 - The final unconnected `TEXT:n` socket is reserved for a new connection. Its arrow buttons are disabled until it is connected; disabled arrows are also shown at the beginning/end of the movable range.
-- The chosen order is saved in the workflow through a hidden `input_order` value and serialized for API execution. Do not edit this value manually.
+- The chosen order is saved in the workflow as `valhalla_batch_text_socket_order` metadata and in the hidden `input_order` value. Both the visual order and its links are restored upon reload; API execution uses `input_order`. Do not edit either manually.
 - Workflows saved with older node versions have a compatible fallback: `TEXT_LIST` first, then numbered `TEXT:n` slots.
 - The `delimiter` remains applied **between every item** of the joined sequence.
 
@@ -99,7 +99,7 @@ Valhalla_BatchText/
 └── tests/
 ```
 
-No external Python packages are required. This extension uses the same node class name as v1.0–v1.5.2.
+No external Python packages are required. This extension uses the same node class name as previous releases.
 
 ## Compatibility with older workflows
 
@@ -120,7 +120,7 @@ No external Python packages are required. This extension uses the same node clas
 5. Select **CRLF (\r\n)** → the output contains the exact CR+LF sequence.
 6. Select **Custom**, enter ` <> ` → `ABC <> DEF`.
 7. Connect a native `TEXT_LIST`, `TEXT:0` and `TEXT:1`; use the outlined arrows to move `TEXT:1` above `TEXT:0` and move `TEXT_LIST` between them. Confirm the output follows the visual order.
-8. Save and reload; verify the reordered sockets and original attached cables remain correct.
+8. Save the workflow, fully restart ComfyUI, reopen the workflow, and verify the reordered sockets and original attached cables remain correct.
 9. Open **ⓘ Info**; verify that all instructions and the **Close** button are in English.
 10. Confirm the selected delimiter remains correct after reload.
 
@@ -131,9 +131,10 @@ From the repository root:
 ```powershell
 python -m unittest discover -s tests -p "test_*.py" -v
 node .\tests\test_dynamic_ui.cjs
+node .\tests\test_order_persistence.cjs
 ```
 
-The Python suite checks separators, list handling, saved output order, large input counts, and Dutch-label compatibility. The JavaScript suite simulates both legacy LiteGraph and the newer ComfyUI link-store rules. It checks collision-free cable moves, original link IDs and sources, stable socket labels, arrow rendering, saved input order, dynamic connectors, widget placement, the popup, and workflow migration. **These are not substitutes for a live ComfyUI test.**
+The Python suite checks separators, list handling, saved output order, large input counts, and Dutch-label compatibility. The JavaScript suites simulate legacy LiteGraph, newer ComfyUI link-store rules and save/reload into a new node instance. It checks collision-free cable moves, original link IDs and sources, stable socket labels, arrow rendering, saved input order, dynamic connectors, widget placement, the popup, and workflow migration. **These are not substitutes for a live ComfyUI test.**
 
 ## Troubleshooting
 

@@ -1,4 +1,4 @@
-name: Publish Batch Text v1.5.3 release
+name: Publish Batch Text v1.5.4 release
 
 on:
   push:
@@ -14,28 +14,32 @@ jobs:
   publish-release:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the verified v1.5.3 code
+      - name: Check out approved stable v1.5.4 code
         uses: actions/checkout@v4
         with:
-          ref: f07b680ccd293f396d5ee3d62925391f449e9086
+          ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Build ComfyUI custom-node archive
+      - name: Verify approved code and build installable custom-node ZIP
         shell: bash
         run: |
+          set -euo pipefail
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/__init__.py)" = "3aa68d76feff7356694aa692d3cb477de6fa6ce6"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/batch_text.py)" = "22e4a6780c1d1d6698029cbe8587add82ef28f72"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text.js)" = "24f5ab15cef90b5a7e9f08d0f2b699306574183b"
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile, ZIP_DEFLATED
 
           source = Path('ComfyUI/Valhalla_BatchText')
-          archive = Path('Valhalla_BatchText_v1.5.3.zip')
-          with ZipFile(archive, 'w', ZIP_DEFLATED, compresslevel=9) as target:
+          archive = Path('Valhalla_BatchText_v1.5.4.zip')
+          assert (source / 'web/js/batch_text.js').is_file()
+          assert (source / 'RELEASE_NOTES_v1.5.4.md').is_file()
+          with ZipFile(archive, 'w', ZIP_DEFLATED, compresslevel=9) as output:
               for path in sorted(source.rglob('*')):
-                  if not path.is_file():
+                  if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
                       continue
-                  if '__pycache__' in path.parts or path.suffix == '.pyc':
-                      continue
-                  target.write(path, Path('Valhalla_BatchText') / path.relative_to(source))
+                  output.write(path, Path('Valhalla_BatchText') / path.relative_to(source))
           print(f'Built {archive}: {archive.stat().st_size} bytes')
           PY
 
@@ -45,14 +49,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view 'v1.5.3' --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            echo 'Release v1.5.3 already exists; no changes made.'
+          if gh release view 'v1.5.4' --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo 'Release v1.5.4 already exists; no changes made.'
             exit 0
           fi
-          gh release create 'v1.5.3' \
-            './Valhalla_BatchText_v1.5.3.zip#Valhalla Batch Text v1.5.3 - ComfyUI custom node' \
+          gh release create 'v1.5.4' \
+            './Valhalla_BatchText_v1.5.4.zip#Valhalla Batch Text v1.5.4 - ComfyUI custom node' \
             --repo "${GITHUB_REPOSITORY}" \
-            --target 'f07b680ccd293f396d5ee3d62925391f449e9086' \
-            --title 'Valhalla Batch Text v1.5.3 — Cable Follow Fix' \
-            --notes-file 'ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.5.3.md' \
+            --target "${GITHUB_SHA}" \
+            --title 'Valhalla Batch Text v1.5.4 — Saved Input Order Fix' \
+            --notes-file 'ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.5.4.md' \
             --latest

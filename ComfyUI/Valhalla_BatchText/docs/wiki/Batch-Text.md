@@ -1,6 +1,6 @@
 # Batch Text — Overview
 
-Valhalla Batch Text v1.5.3 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
+Valhalla Batch Text v1.5.4 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
 
 ![Node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
 
@@ -14,7 +14,7 @@ Valhalla Batch Text v1.5.3 merges native ComfyUI text values using Python's `del
 
 ## New: arrows control join order
 
-Move inputs using the small **up/down arrows** beside eligible sockets. The **current top-to-bottom order** determines the order of the concatenated values. `TEXT_LIST` may be moved below, above or between the numbered inputs. The linked cables are retained, and the processing order is saved in `input_order` for Python execution.
+Move inputs using the small **up/down arrows** beside eligible sockets. The **current top-to-bottom order** determines the order of the concatenated values. `TEXT_LIST` may be moved below, above or between the numbered inputs. The linked cables are retained, and the processing order is saved in workflow metadata and `input_order` for Python execution. A saved workflow restores the same visible port order and cables after reopening.
 
 See [Reordering Inputs](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs) for a before/after example.
 

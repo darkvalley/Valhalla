@@ -51,7 +51,7 @@ jobs:
             echo 'Wiki pages already up to date.'
             exit 0
           fi
-          git -C wiki commit -m 'Publish Batch Text v1.5.3 wiki documentation'
+          git -C wiki commit -m 'Publish Batch Text v1.5.4 wiki documentation'
           if ! git -c "http.https://github.com/.extraheader=${auth}" -C wiki push origin HEAD; then
             echo '::error::GitHub rejected the Wiki push. Create and save its first Home page in the GitHub Wiki tab, then rerun this workflow.'
             exit 1

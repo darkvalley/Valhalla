@@ -1,4 +1,4 @@
-**Valhalla Batch Text v1.5.3**
+**Valhalla Batch Text v1.5.4**
 
 - [Home](https://github.com/darkvalley/Valhalla/wiki/Home)
 - [Batch Text](https://github.com/darkvalley/Valhalla/wiki/Batch-Text)

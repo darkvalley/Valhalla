@@ -1,4 +1,4 @@
-# Reordering Inputs — Updated for v1.5.3
+# Reordering Inputs — Updated for v1.5.4
 
 The **up/down arrows** beside the sockets change the order in which Batch Text processes values. The arrows do not simply change the appearance of the node: the Python backend receives the saved order.
 
@@ -9,7 +9,7 @@ The **up/down arrows** beside the sockets change the order in which Batch Text p
 1. Connect a native `STRING` list to `TEXT_LIST` (optional) and regular `STRING` values to `TEXT:0`, `TEXT:1`, etc.
 2. Click the **down arrow (↓)** next to a socket to move it one position lower, or the **up arrow (↑)** to move it one position higher.
 3. Watch the sockets and attached cables move together; ComfyUI does not connect them to a different source.
-4. Save the workflow to retain the order, then queue it as usual.
+4. Save the workflow and reopen it after restarting ComfyUI to confirm port positions and cables persist; then queue it as usual.
 5. Connect `TEXT` to a text preview to verify the resulting sequence.
 
 ## Example
@@ -28,9 +28,9 @@ The **up/down arrows** beside the sockets change the order in which Batch Text p
 
 - The frontend updates the sockets' physical order, keeps link objects attached and updates LiteGraph `target_slot` indices.
 - Numbered `TEXT:n` labels stay with their socket and its existing source connection when moved. The last free `TEXT:n` is an unconnected placeholder and does not contribute output.
-- The hidden `input_order` widget is serialized with the workflow and API prompt. Do not edit it manually.
+- Workflow metadata `valhalla_batch_text_socket_order` and the hidden `input_order` widget preserve the selected order. The API prompt still uses `input_order`. Do not edit these values manually.
 - Older workflows without order metadata retain the old fallback order: `TEXT_LIST` first, then `TEXT:0`, `TEXT:1`, etc.
-- If the ordering does not affect the output, ensure the installed node is **v1.5.3 or later**, restart ComfyUI, and hard-refresh the frontend.
+- If the ordering does not affect the output, ensure the installed node is **v1.5.4 or later**, restart ComfyUI, and hard-refresh the frontend.
 
 ## UI correction in v1.5.2
 
@@ -43,3 +43,7 @@ In modern ComfyUI versions with a central link store, an occupied target slot ca
 **Try it:** connect `A` to `TEXT:0`, `B` to `TEXT:1`, and an optional native list to `TEXT_LIST`. Move `TEXT:1` above `TEXT:0` and watch its cable follow `TEXT:1`. Next move `TEXT_LIST` between the numbered inputs; its cable must move with it. Queue the workflow: the output order must match the displayed top-to-bottom socket order. Save and reload to confirm it persists.
 
 The owner tested and approved this behavior in a live ComfyUI workflow before the v1.5.3 GitHub publication.
+
+## v1.5.4 — Saved port order survives restart
+
+GitHub [issue #1](https://github.com/darkvalley/Valhalla/issues/1) was fixed by restoring the saved socket order and matching socket identities to their original connected links when reopening a workflow. The positions and cables now persist after a full ComfyUI restart. Confirmed in a local workflow by the project owner on 28 October 2026.

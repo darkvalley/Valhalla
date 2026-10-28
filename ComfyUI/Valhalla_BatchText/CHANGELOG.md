@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.4 — saved port order survives restart (28 October 2026)
+
+- Fix [issue #1](https://github.com/darkvalley/Valhalla/issues/1): reordered input ports no longer revert to default after saving, reopening or restarting ComfyUI.
+- Restore saved `TEXT_LIST` and `TEXT:n` socket positions with their original cables.
+- Persist socket order in workflow metadata and the hidden `input_order` widget; preserve older workflows and Python joining semantics.
+- Add restart/reload regression tests. Confirmed in a local ComfyUI workflow by the project owner on 28 October 2026.
+
+
 ## v1.5.3 — cable-follow reorder fix (27 October 2026)
 
 - Fix link-target collisions when two *connected* input sockets are exchanged on recent ComfyUI frontends using a central link store.
