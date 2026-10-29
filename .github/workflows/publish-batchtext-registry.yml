@@ -35,10 +35,10 @@ jobs:
 
       - name: Check publishing credentials
         env:
-          REGISTRY_ACCESS_TOKEN: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+          REGISTRY_ACCESS_TOKEN: ${{ secrets.COMFYUICUSTOMNODES }}
         run: |
           if [ -z "$REGISTRY_ACCESS_TOKEN" ]; then
-            echo "::error::Create a repository secret named REGISTRY_ACCESS_TOKEN with your Comfy Registry Publishing API Key."
+            echo "::error::Create a repository secret named COMFYUICUSTOMNODES with your Comfy Registry Publishing API Key."
             exit 1
           fi
 
@@ -75,7 +75,7 @@ jobs:
       - name: Publish the approved stable version
         working-directory: ComfyUI/Valhalla_BatchText
         env:
-          REGISTRY_ACCESS_TOKEN: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+          REGISTRY_ACCESS_TOKEN: ${{ secrets.COMFYUICUSTOMNODES }}
         run: |
           comfy node publish \
             --token "$REGISTRY_ACCESS_TOKEN" \
