@@ -1,0 +1,8 @@
+# Development and release administration files are not needed at runtime.
+tests/
+__pycache__/
+*.pyc
+Install-Valhalla-BatchText.ps1
+RELEASE_NOTES_*.md
+INSTALLATIE_NL.txt
+# Keep docs/ and its illustrations: README.md links to them.

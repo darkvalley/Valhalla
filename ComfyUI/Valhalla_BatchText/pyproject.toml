@@ -1,0 +1,21 @@
+[project]
+name = "valhalla-batch-text"
+version = "1.5.4"
+description = "Combine native ComfyUI STRING lists and dynamically reorderable text inputs with configurable separators and persistent socket order."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "Werner de Jong" }]
+dependencies = []
+classifiers = [
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repository = "https://github.com/darkvalley/Valhalla"
+Documentation = "https://github.com/darkvalley/Valhalla/blob/main/ComfyUI/Valhalla_BatchText/README.md"
+"Bug Tracker" = "https://github.com/darkvalley/Valhalla/issues"
+
+[tool.comfy]
+PublisherId = "darkvalley"
+DisplayName = "Valhalla Batch Text"

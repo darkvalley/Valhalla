@@ -15,3 +15,11 @@ A custom ComfyUI node that concatenates an optional native `STRING` list and unl
 **Created by Werner de Jong.** © 2026 Werner de Jong. MIT License. The node has its own [`LICENSE`](ComfyUI/Valhalla_BatchText/LICENSE).
 
 > **Installation note:** Clone or download the repository outside ComfyUI first. Copy the `ComfyUI/Valhalla_BatchText` folder into your ComfyUI `custom_nodes` directory, or use the included PowerShell installer. Do not clone the entire repository directly into `custom_nodes`.
+
+## Comfy Registry publishing (maintainers)
+
+The Comfy Registry package is prepared from [`ComfyUI/Valhalla_BatchText`](ComfyUI/Valhalla_BatchText) using its `pyproject.toml` manifest and `.comfyignore`. Only this custom node is packaged; the Valhalla repository as a whole is not an installable node package.
+
+To publish an approved stable version, create the GitHub Actions repository secret `REGISTRY_ACCESS_TOKEN` with your Comfy Registry **Publishing API Key**. Confirm the `PublisherId` in `pyproject.toml` matches your Registry publisher (currently configured as `darkvalley`). Open **Actions > Publish Valhalla Batch Text to Comfy Registry > Run workflow** and select the approved `main` revision. The workflow runs Python and JavaScript regression tests, validates Registry metadata, checks the package contents and then publishes with the release notes.
+
+**Publishing is manual only.** Adding metadata or pushing code does not itself publish a Registry version. Registry versions cannot be overwritten; update `[project].version` and the release-notes filename in the workflow for later approved versions.
