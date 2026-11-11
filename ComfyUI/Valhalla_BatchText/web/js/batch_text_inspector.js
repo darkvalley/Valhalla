@@ -393,3 +393,168 @@ function createIntegratedPreview(node) {
   node.valhallaBatchTextArea = textarea;
   node.valhallaBatchCounter = counter;
   return widget;
+}
+function insertInspectorWidgets(node) {
+  if (node.__batchInspectorInstalled || !find(node, "show_preview")) return;
+  node.__batchInspectorInstalled = true;
+  const hint = find(node, "workflow_hint");
+  if (hint) {
+    hint.serializeValue = () => {
+      hint.value = workflowHint() || hint.value || "";
+      return hint.value;
+    };
+  }
+  const display = node.addWidget?.("text", "Logmap", "", value => {
+    // Editing the displayed path is also supported: clearing it restores AUTO.
+    const stored = find(node, "log_folder");
+    if (stored) stored.value = String(value ?? "");
+    void checkFolder(node);
+  }, {serialize:false});
+  if (display) {
+    display.serialize = false;
+    display.options ??= {};
+    display.options.serialize = false;
+    display.tooltip = "Leeg = workflowmap; zelf invullen of een map kiezen";
+    node.valhallaBatchLogDisplay = display;
+  }
+  const browse = node.addWidget?.("button", "📁 Choose log folder...", "", () => chooseFolder(node),
+                                 {serialize:false});
+  if (browse) {
+    browse.serialize = false;
+    browse.options ??= {};
+    browse.options.serialize = false;
+    node.valhallaBatchBrowseButton = browse;
+  }
+  try {
+    // Native ComfyUI DOM widgets allocate leftover vertical space to this
+    // growable panel. Info is rendered as a small header icon instead.
+    let widget = createIntegratedPreview(node);
+    if (!widget) {
+      const created = ComfyWidgets.STRING(node, "preview", ["STRING", {
+        multiline:true, default:PREVIEW_DEFAULT, dynamicPrompts:false,
+      }], app);
+      widget = created.widget;
+      widget.serialize = false;
+      widget.options ??= {};
+      widget.options.serialize = false;
+      if (widget.element) {
+        widget.element.readOnly = true;
+        widget.element.style.minHeight = "0";
+        widget.element.style.overflowY = "auto";
+      }
+      widget.computeSize = () => [Math.max(0, (node.size?.[0] || 420) - 20),
+        MIN_PREVIEW_HEIGHT];
+    }
+    node.valhallaBatchPreviewWidget = widget;
+  } catch (error) {
+    console.warn("Batch Text: preview kon niet worden gemaakt", error);
+  }
+  // Only NON-SERIALIZING widgets move: the old delimiter, custom delimiter,
+  // input_order and all new schema widgets retain stable saved-value indices.
+  const max = find(node, "max_chars");
+  positionBefore(node, display, max);
+  positionBefore(node, browse, max);
+  positionBefore(node, node.valhallaBatchPreviewWidget, find(node, "ⓘ  Info"));
+  setCounter(node, 0, 0);
+  for (const name of ["show_preview", "write_log"]) {
+    const widget = find(node, name);
+    if (!widget || widget.__batchInspectorCallback) continue;
+    const original = widget.callback;
+    widget.callback = function(...args) {
+      const result = original?.apply(this, args);
+      updateVisibility(node);
+      return result;
+    };
+    widget.__batchInspectorCallback = true;
+  }
+  updateVisibility(node);
+}
+
+app.registerExtension({
+  name:"Valhalla.BatchText.OptionalTextInspector",
+  nodeCreated(node) {
+    if (node.type !== CLASS_NAME && node.comfyClass !== CLASS_NAME) return;
+    insertInspectorWidgets(node);
+    if (!node.__batchInspectorInstalled) return;
+    const oldConfigure = node.onConfigure;
+    node.onConfigure = function(...args) {
+      const value = oldConfigure?.apply(this,args);
+      // Current ComfyUI restores schema values before onConfigure returns.
+      updateVisibility(this);
+      return value;
+    };
+    const oldSerialize = node.onSerialize;
+    node.onSerialize = function(...args) {
+      find(this, "workflow_hint")?.serializeValue?.();
+      const result = oldSerialize?.apply(this,args);
+      if (asBoolean(find(this, "write_log")?.value)) void checkFolder(this);
+      return result;
+    };
+    const oldExecuted = node.onExecuted;
+    node.onExecuted = function(payload,...args) {
+      try { return oldExecuted?.call(this,payload,...args); }
+      finally { renderPreview(this, payload); }
+    };
+    // Some ComfyUI frontend builds dispatch an executed API event without
+    // subsequently invoking a custom instance's onExecuted callback. Listen
+    // for that event as a fallback; duplicate payloads are harmless.
+    if (typeof api.addEventListener === "function") {
+      const listener = event => {
+        const detail = event?.detail;
+        if (!detail || String(detail.node) !== String(node.id)) return;
+        renderPreview(node, detail.output);
+      };
+      api.addEventListener("executed", listener);
+      node.__batchInspectorExecutionListener = listener;
+    }
+    // LiteGraph's classic resize drag does not consistently emit onResize.
+    // Detect changes in the drawing lifecycle without forcing node.setSize.
+    const oldResize = node.onResize;
+    node.onResize = function(...args) {
+      const result = oldResize?.apply(this, args);
+      updatePreviewGeometry(this);
+      return result;
+    };
+    const oldForeground = node.onDrawForeground;
+    node.onDrawForeground = function(ctx, ...args) {
+      updatePreviewGeometry(this);
+      const result = oldForeground?.call(this, ctx, ...args);
+      drawInfoIcon(this, ctx);
+      return result;
+    };
+    const oldMouseDown = node.onMouseDown;
+    node.onMouseDown = function(event, pos, ...args) {
+      if ((event?.button === undefined || event.button === 0) && isInfoHit(this, pos)) {
+        find(this, "ⓘ  Info")?.callback?.();
+        return true;
+      }
+      return oldMouseDown?.call(this, event, pos, ...args);
+    };
+    const oldMouseMove = node.onMouseMove;
+    node.onMouseMove = function(event, pos, ...args) {
+      const hover = isInfoHit(this, pos);
+      if (this.__batchInfoHover !== hover) {
+        this.__batchInfoHover = hover;
+        this.setDirtyCanvas?.(true, false);
+      }
+      return oldMouseMove?.call(this, event, pos, ...args);
+    };
+    const oldMouseLeave = node.onMouseLeave;
+    node.onMouseLeave = function(...args) {
+      if (this.__batchInfoHover) {
+        this.__batchInfoHover = false;
+        this.setDirtyCanvas?.(true, false);
+      }
+      return oldMouseLeave?.apply(this, args);
+    };
+    const oldRemoved = node.onRemoved;
+    node.onRemoved = function(...args) {
+      this.__batchInspectorRemoved = true;
+      if (this.__batchInspectorExecutionListener && typeof api.removeEventListener === "function") {
+        api.removeEventListener("executed", this.__batchInspectorExecutionListener);
+      }
+      unmountCounter(this);
+      return oldRemoved?.apply(this,args);
+    };
+  },
+});
