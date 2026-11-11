@@ -1,5 +1,5 @@
 /**
- * Valhalla Batch Text v1.5.4 — order persistence / restart fix.
+ * Valhalla Batch Text v1.6.0 — order persistence / restart fix.
  * Existing node class, sockets, delimiter settings and original connections stay compatible.
  * © 2026 Werner de Jong — MIT License.
  */
@@ -496,7 +496,7 @@ function showInfoDialog() {
   const dialog=document.createElement('dialog');dialog.className='valhalla-batch-info';
   dialog.setAttribute('aria-label','Batch Text - help and license');
   dialog.innerHTML=`<div class="vb-content"><h2>ⓘ Batch Text</h2>
-  <p>Valhalla's Calling · v1.5.4</p>
+  <p>Valhalla's Calling · v1.6.0</p>
   <p>Combine a native ComfyUI <code>TEXT_LIST</code> and any number of individual
   <code>TEXT:n</code> inputs into a single STRING output.</p>
   <h3>How to use</h3><ol>
@@ -511,6 +511,11 @@ function showInfoDialog() {
   <code>\\t</code>, and <code>\\\\</code>. A multiline STRING is one item,
   not automatically split into a list.</p>
   <p>Disconnected inputs are skipped. Connected empty strings are included.</p>
+  <h3>Optional Text Inspector</h3><p>Enable <code>show_preview</code> to reveal the
+  text preview and <code>max_chars</code> limit. The original TEXT output is
+  never truncated. Enable <code>write_log</code> to show the log path and one
+  folder-browser button. Clear the path to log alongside the saved workflow
+  (where the workflow storage path is available). Logs append full text for each run.</p>
   <p><strong>Conceived and created by Werner de Jong.</strong></p>
   <p><strong>License:</strong> Free to use — MIT License. © 2026 Werner de Jong.</p>
   <div class="vb-actions"><button class="vb-close" type="button">Close</button></div></div>`;
