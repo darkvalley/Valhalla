@@ -128,3 +128,133 @@ function updatePreviewGeometry(node, allowGrow = false) {
       preview.element.style.minHeight = "0";
       preview.element.style.maxHeight = "none";
     }
+  } else {
+    // Older frontends without addDOMWidget retain the existing textarea path.
+    // Keep a CONSTANT computed minimum, so a manual resize can go smaller.
+    preview.options.getMinHeight = () => MIN_PREVIEW_HEIGHT;
+    preview.options.getHeight = () => height;
+    if (preview.element?.style) {
+      preview.element.style.height = `${height}px`;
+      preview.element.style.minHeight = "0";
+      preview.element.style.maxHeight = "none";
+      preview.element.style.boxSizing = "border-box";
+      preview.element.style.resize = "none";
+    }
+  }
+  node.setDirtyCanvas?.(true, true);
+}
+// A small canvas header icon replaces the former Info footer in BOTH states.
+// Avoid a regular Info widget after the DOM widget (causes overlapping/gaps).
+function infoCenter(node) {
+  return [Math.max(24, (node.size?.[0] || 420) - INFO_RIGHT), INFO_TOP];
+}
+function isInfoHit(node, pos) {
+  if (!pos || node.flags?.collapsed) return false;
+  const [x,y] = infoCenter(node);
+  return Math.abs(Number(pos[0]) - x) <= INFO_RADIUS + 5 &&
+         Math.abs(Number(pos[1]) - y) <= INFO_RADIUS + 5;
+}
+function drawInfoIcon(node, ctx) {
+  if (!ctx?.beginPath || node.flags?.collapsed) return;
+  const [x,y] = infoCenter(node);
+  const active = Boolean(node.__batchInfoHover);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, INFO_RADIUS, 0, Math.PI * 2);
+  ctx.fillStyle = active ? "#465568" : "#272b32";
+  ctx.strokeStyle = active ? "#e3efff" : "#9da9b7";
+  ctx.lineWidth = 1.25;
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f2f5f8";
+  ctx.font = "bold 11px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("i", x, y + 0.5);
+  ctx.restore();
+}
+function updateVisibility(node) {
+  const enabled = asBoolean(find(node, "show_preview")?.value);
+  const writing = enabled && asBoolean(find(node, "write_log")?.value);
+  // Backend schema widgets stay in place for saved workflow compatibility.
+  setHidden(find(node, "write_log"), !enabled);
+  setHidden(find(node, "log_folder"), true);
+  setHidden(find(node, "workflow_hint"), true);
+  setHidden(node.valhallaBatchLogDisplay, !writing);
+  setHidden(node.valhallaBatchBrowseButton, !writing);
+  setHidden(find(node, "max_chars"), !enabled);
+  setHidden(node.valhallaBatchPreviewWidget, !enabled);
+  // The original Info widget is kept as a callback target (for the dialog)
+  // but the header icon is now its ONLY visible trigger, in every mode.
+  setHidden(find(node, "ⓘ  Info"), true);
+  if (!enabled) {
+    unmountCounter(node);
+    node.__batchPreviewHeight = null;
+  } else {
+    const textarea = node.__batchIntegratedPreview ? node.valhallaBatchTextArea : node.valhallaBatchPreviewWidget?.element;
+    if (textarea) textarea.readOnly = true;
+    updatePreviewGeometry(node, true);
+    scheduleCounterMount(node);
+    // Layout may settle after ComfyUI processes hidden/show DOM widgets.
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => updatePreviewGeometry(node));
+    }
+  }
+  if (writing) void checkFolder(node);
+  node.setDirtyCanvas?.(true, true);
+}
+function setStatus(node, message, error = false) {
+  node.valhallaBatchLogStatus = message;
+  const browse = node.valhallaBatchBrowseButton;
+  if (browse) {
+    browse.label = error ? "📁 Choose log folder (check path)" : "📁 Choose log folder...";
+    browse.tooltip = message;
+    browse.options ??= {};
+    browse.options.tooltip = message;
+  }
+  node.setDirtyCanvas?.(true, true);
+}
+async function checkFolder(node) {
+  if (!asBoolean(find(node, "show_preview")?.value) ||
+      !asBoolean(find(node, "write_log")?.value)) return;
+  const hint = workflowHint() || savedWidgetValue(find(node, "workflow_hint"));
+  const folder = String(savedWidgetValue(find(node, "log_folder")));
+  const query = new URLSearchParams({ path:folder, workflow_hint:hint });
+  const requestSequence = (node.__batchFolderSeq = (node.__batchFolderSeq || 0) + 1);
+  try {
+    const response = await api.fetchApi(`${BASE}/log_folder_status?${query}`);
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error || `HTTP ${response.status}`);
+    if (requestSequence !== node.__batchFolderSeq) return;
+    if (node.valhallaBatchLogDisplay) {
+      node.valhallaBatchLogDisplay.value = String(result.path || "");
+      node.valhallaBatchLogDisplay.label = result.automatic ? "Logmap (automatisch)" : "Logmap";
+    }
+    setStatus(node, result.exists ? `Logmap: ${result.path}` : `Logmap ontbreekt: ${result.path}`, !result.exists);
+  } catch (error) {
+    if (requestSequence !== node.__batchFolderSeq) return;
+    setStatus(node, `Logmapcontrole mislukt: ${error.message}`, true);
+  }
+}
+async function chooseFolder(node) {
+  const hidden = find(node, "log_folder");
+  if (!hidden) return;
+  const hint = workflowHint() || savedWidgetValue(find(node, "workflow_hint"));
+  const initial = String(hidden.value ?? "");
+  try {
+    const response = await api.fetchApi(`${BASE}/choose_log_folder`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({initial_dir:initial, workflow_hint:hint}),
+    });
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error || `HTTP ${response.status}`);
+    if (result.path) {
+      hidden.value = result.path; // always the ONLY stored path, never a second browse field
+      node.valhallaBatchLogDisplay.value = result.path;
+      await checkFolder(node);
+      node.graph?.setDirtyCanvas?.(true, true);
+    }
+  } catch (error) {
+    setStatus(node, `Logmap kiezen mislukt: ${error.message}`, true);
+    console.warn("Batch Text: logmap kiezen mislukt", error);
+  }
