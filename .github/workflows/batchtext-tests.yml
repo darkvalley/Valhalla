@@ -27,5 +27,11 @@ jobs:
         run: node ComfyUI/Valhalla_BatchText/tests/test_dynamic_ui.cjs
       - name: Saved-port-order restart and reload regression
         run: node ComfyUI/Valhalla_BatchText/tests/test_order_persistence.cjs
+      - name: Integrated Text Inspector and resize regression
+        run: node ComfyUI/Valhalla_BatchText/tests/test_inspector_integrated_ui.cjs
+      - name: Text Inspector widgets and UI regression
+        run: node ComfyUI/Valhalla_BatchText/tests/test_inspector_ui.cjs
       - name: JavaScript syntax
-        run: node --check ComfyUI/Valhalla_BatchText/web/js/batch_text.js
+        run: |
+          node --check ComfyUI/Valhalla_BatchText/web/js/batch_text.js
+          node --check ComfyUI/Valhalla_BatchText/web/js/batch_text_inspector.js
