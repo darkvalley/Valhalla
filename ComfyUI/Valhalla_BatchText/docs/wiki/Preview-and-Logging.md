@@ -2,6 +2,10 @@
 
 Batch Text v1.6.0 adds **optional text inspection and cumulative text logging** directly to the existing **Batch Text** node. There is no second inspector node and no change to the TEXT output connector, input ordering, native TEXT_LIST support, or delimiter behavior.
 
+![Batch Text v1.6.0 with preview and logging enabled](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/06-preview-and-logging-v1.6.0.svg)
+
+*Illustration of the v1.6.0 interface with both options enabled, a selected log folder and example combined text. Not a live ComfyUI screenshot.*
+
 ## Show Preview
 
 - **show_preview** is **off by default**. When off, the inspector controls and preview are hidden.
