@@ -4,7 +4,10 @@
 
 Valhalla Batch Text v1.6.0 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
 
-![Node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
+![Batch Text v1.6.0 preview and logging UI](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/06-preview-and-logging-v1.6.0.svg)
+
+*Illustrated v1.6.0 interface: both optional toggles enabled, log folder and preview visible. [See the earlier input-order diagram](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg).*
+
 
 ## Connections
 
