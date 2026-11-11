@@ -72,7 +72,7 @@
 <text x="170" y="732" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace"></text>
 <text x="170" y="761" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">All connected text inputs are combined in the selected order.</text>
 <rect x="684" y="846" width="94" height="26" rx="5" fill="#222735" stroke="#596782" stroke-width="1.2"/>
-<text x="731" y="864" fill="#f5f8ff" font-size="14" font-weight="500" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">148 tekens</text>
+<text x="731" y="864" fill="#f5f8ff" font-size="14" font-weight="500" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">181 tekens</text>
 <rect x="850" y="180" width="495" height="143" rx="12" fill="#1b2736" stroke="#3a6d9c" stroke-width="1.8"/>
 <text x="876" y="220" fill="#ebf5ff" font-size="24" font-weight="700" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">1   Preview (optional)</text>
 <text x="876" y="254" fill="#c2d2e4" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Shows the joined TEXT output inside the node.</text>
