@@ -1,9 +1,23 @@
-# Valhalla Batch Text v1.5.4 — English edition for ComfyUI
+# Valhalla Batch Text v1.6.0 — English edition for ComfyUI
 
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
 
 **[Download the official v1.5.4 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.4/Valhalla_BatchText_v1.5.4.zip)
+
+## What's new in v1.6.0
+
+The existing Batch Text node now includes an optional **integrated Text Inspector** (no extra node):
+
+- **show_preview** is off by default. Enabling it shows the read-only combined TEXT preview, a character counter and **max_chars** (default 200,000; preview display only).
+- The preview dynamically follows manual node resizing in both directions. A compact **ⓘ** icon in the top-right replaces the Info row under the preview.
+- **write_log** is off by default. Enabling it reveals the log folder and the one **📁 Choose log folder...** button. The chosen folder is saved with the workflow.
+- Blank/NULL/auto log paths default to the saved workflow's directory where available; otherwise ComfyUI's user workflow directory. Logging appends the **complete** combined text, never a preview-truncated version.
+- The native folder chooser requires the ComfyUI server to run locally on Windows; the path may also be entered manually. The output TEXT, socket order, delimiters and connected cables remain compatible.
+
+**Documentation:** [Preview and Logging](docs/wiki/Preview-and-Logging.md) · [v1.6.0 release notes](RELEASE_NOTES_v1.6.0.md).
+
+**Release status:** v1.6.0 source available in this repository; the v1.5.4 tagged ZIP linked above is a previous release download.
 
 ## Overview
 
