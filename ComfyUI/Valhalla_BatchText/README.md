@@ -3,7 +3,7 @@
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
 
-**[Download the official v1.5.4 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.4/Valhalla_BatchText_v1.5.4.zip)
+**[Download the official v1.6.0 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.6.0)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.0/Valhalla_BatchText_v1.6.0.zip)
 
 ## What's new in v1.6.0
 
@@ -17,7 +17,7 @@ The existing Batch Text node now includes an optional **integrated Text Inspecto
 
 **Documentation:** [Preview and Logging](docs/wiki/Preview-and-Logging.md) · [v1.6.0 release notes](RELEASE_NOTES_v1.6.0.md).
 
-**Release status:** v1.6.0 source available in this repository; the v1.5.4 tagged ZIP linked above is a previous release download.
+**Release:** v1.6.0 adds the integrated Text Inspector; previous stable release: [v1.5.4](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4).
 
 ## Overview
 
