@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="965" viewBox="0 0 1400 965" role="img" aria-labelledby="title desc">
+<title id="title">Valhalla Batch Text v1.6.0 — Preview and Logging</title>
+<desc id="desc">Illustration of the current Batch Text node with show_preview and write_log enabled. Shows native TEXT_LIST, dynamically reorderable text inputs, delimiter, log folder, Choose log folder button, max_chars, a text preview with character count, and the header Info icon.</desc>
+<defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#242a32" stroke-width="1"/></pattern></defs>
+<rect x="0" y="0" width="1400" height="965" rx="0" fill="#12171f" stroke="none" stroke-width="1"/>
+<rect x="0" y="0" width="1400" height="965" rx="0" fill="url(#grid)" stroke="none" stroke-width="1"/>
+<text x="56" y="65" fill="#f4f7fb" font-size="37" font-weight="700" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Valhalla Batch Text — Preview &amp; Logging</text>
+<text x="58" y="104" fill="#a9bacd" font-size="19" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Version 1.6.0  •  Illustrated ComfyUI interface  •  Both optional features enabled</text>
+<rect x="122" y="145" width="682" height="756" rx="14" fill="#343434" stroke="#a4a4a4" stroke-width="2.3"/>
+<rect x="129" y="151" width="668" height="34" rx="8" fill="#303030" stroke="none" stroke-width="1"/>
+<circle cx="150" cy="168" r="7" fill="#5d5d5d" stroke="none" stroke-width="1"/>
+<text x="166" y="175" fill="#f1f1f1" font-size="21" font-weight="600" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Batch Text</text>
+<rect x="625" y="127" width="165" height="20" rx="4" fill="#183121" stroke="none" stroke-width="1"/>
+<text x="707" y="142" fill="#d5f4dd" font-size="14" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">Valhalla_BatchText</text>
+<circle cx="754" cy="172" r="10" fill="none" stroke="#cfd7e0" stroke-width="2"/>
+<text x="754" y="178" fill="#e8f2fc" font-size="15" font-weight="700" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">i</text>
+<text x="762" y="214" fill="#bfc5ca" font-size="18" font-weight="400" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">TEXT</text>
+<circle cx="789" cy="208" r="6" fill="#64d886" stroke="none" stroke-width="1"/>
+<circle cx="124" cy="207" r="5" fill="#848092" stroke="none" stroke-width="1"/>
+<text x="142" y="212" fill="#b9c0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">☷ TEXT_LIST</text>
+<rect x="662" y="196" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="676" y="215" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↑</text>
+<rect x="699" y="196" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="713" y="215" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↓</text>
+<circle cx="124" cy="238" r="5" fill="#61d47d" stroke="none" stroke-width="1"/>
+<text x="142" y="243" fill="#b9c0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">TEXT:0</text>
+<rect x="662" y="227" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="676" y="246" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↑</text>
+<rect x="699" y="227" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="713" y="246" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↓</text>
+<circle cx="124" cy="269" r="5" fill="#61d47d" stroke="none" stroke-width="1"/>
+<text x="142" y="274" fill="#b9c0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">TEXT:1</text>
+<rect x="662" y="258" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="676" y="277" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↑</text>
+<rect x="699" y="258" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="713" y="277" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↓</text>
+<circle cx="124" cy="300" r="5" fill="#777580" stroke="none" stroke-width="1"/>
+<text x="142" y="305" fill="#b9c0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">TEXT:2</text>
+<rect x="662" y="289" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="676" y="308" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↑</text>
+<rect x="699" y="289" width="28" height="24" rx="5" fill="#283543" stroke="#586f8b" stroke-width="1"/>
+<text x="713" y="308" fill="#cad5e8" font-size="18" font-weight="600" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">↓</text>
+<rect x="157" y="330" width="633" height="32" rx="16" fill="#2b2b2b" stroke="#777" stroke-width="1.3"/>
+<text x="173" y="352" fill="#aeb6c2" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">◀  delimiter</text>
+<text x="772" y="352" fill="#e7eef8" font-size="16" font-weight="500" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">Blank line (\n\n)  ▶</text>
+<rect x="157" y="366" width="633" height="32" rx="16" fill="#292929" stroke="#666" stroke-width="1.5"/>
+<text x="173" y="387" fill="#bac0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">show_preview</text>
+<text x="745" y="387" fill="#dfe5ed" font-size="17" font-weight="600" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">On</text>
+<rect x="758" y="371" width="24" height="22" rx="11" fill="#596370" stroke="none" stroke-width="1"/>
+<circle cx="771" cy="382" r="8" fill="#b7c4d4" stroke="none" stroke-width="1"/>
+<rect x="157" y="402" width="633" height="32" rx="16" fill="#292929" stroke="#666" stroke-width="1.5"/>
+<text x="173" y="423" fill="#bac0c8" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">write_log</text>
+<text x="745" y="423" fill="#dfe5ed" font-size="17" font-weight="600" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">On</text>
+<rect x="758" y="407" width="24" height="22" rx="11" fill="#596370" stroke="none" stroke-width="1"/>
+<circle cx="771" cy="418" r="8" fill="#b7c4d4" stroke="none" stroke-width="1"/>
+<rect x="157" y="438" width="633" height="32" rx="16" fill="#2b2b2b" stroke="#777" stroke-width="1.3"/>
+<text x="173" y="460" fill="#aeb6c2" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Logmap</text>
+<text x="772" y="460" fill="#e7eef8" font-size="16" font-weight="500" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">C:\AI-Engines\Projects\The_Empire\Log</text>
+<rect x="158" y="472" width="632" height="35" rx="2" fill="#252525" stroke="#727272" stroke-width="1.4"/>
+<rect x="335" y="484" width="20" height="16" rx="2" fill="#d7b753" stroke="none" stroke-width="1"/>
+<rect x="337" y="479" width="15" height="7" rx="1" fill="#edda8b" stroke="none" stroke-width="1"/>
+<text x="373" y="495" fill="#e2e7ed" font-size="17" font-weight="500" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Choose log folder...</text>
+<rect x="157" y="520" width="633" height="32" rx="16" fill="#2b2b2b" stroke="#777" stroke-width="1.3"/>
+<text x="173" y="542" fill="#aeb6c2" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">◀  max_chars</text>
+<text x="772" y="542" fill="#e7eef8" font-size="16" font-weight="500" text-anchor="end" font-family="Segoe UI, Arial, sans-serif">200000  ▶</text>
+<rect x="157" y="560" width="633" height="323" rx="2" fill="#1b1b1b" stroke="#424242" stroke-width="1.6"/>
+<text x="170" y="587" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">FIRST PARAGRAPH</text>
+<text x="170" y="616" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">Character context for the next panel.</text>
+<text x="170" y="645" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace"></text>
+<text x="170" y="674" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">SECOND PARAGRAPH</text>
+<text x="170" y="703" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">Preserve the same character and drawing style.</text>
+<text x="170" y="732" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace"></text>
+<text x="170" y="761" fill="#e4edf8" font-size="17" font-weight="400" text-anchor="start" font-family="Consolas, Liberation Mono, monospace">All connected text inputs are combined in the selected order.</text>
+<rect x="684" y="846" width="94" height="26" rx="5" fill="#222735" stroke="#596782" stroke-width="1.2"/>
+<text x="731" y="864" fill="#f5f8ff" font-size="14" font-weight="500" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">148 tekens</text>
+<rect x="850" y="180" width="495" height="143" rx="12" fill="#1b2736" stroke="#3a6d9c" stroke-width="1.8"/>
+<text x="876" y="220" fill="#ebf5ff" font-size="24" font-weight="700" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">1   Preview (optional)</text>
+<text x="876" y="254" fill="#c2d2e4" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Shows the joined TEXT output inside the node.</text>
+<text x="876" y="283" fill="#a7bbd0" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Read-only • resizes with node • character count</text>
+<path d="M850 285L812 285" stroke="#469bd3" stroke-width="2" fill="none"/>
+<path d="M812 285L812 648" stroke="#469bd3" stroke-width="2" fill="none"/>
+<path d="M812 648L794 648" stroke="#469bd3" stroke-width="2" fill="none"/>
+<rect x="850" y="355" width="495" height="164" rx="12" fill="#242e2b" stroke="#4a967b" stroke-width="1.8"/>
+<text x="876" y="396" fill="#effff4" font-size="24" font-weight="700" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">2   Logging (optional)</text>
+<text x="876" y="429" fill="#cae4d4" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Write Log adds the log-folder path and picker.</text>
+<text x="876" y="458" fill="#acd2bd" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">The selected directory persists on workflow reload.</text>
+<text x="876" y="490" fill="#acd2bd" font-size="17" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Logs include full text (not preview-limited).</text>
+<path d="M850 473L813 473" stroke="#6cc39a" stroke-width="2" fill="none"/>
+<path d="M813 473L795 473" stroke="#6cc39a" stroke-width="2" fill="none"/>
+<rect x="850" y="551" width="495" height="120" rx="12" fill="#2b2936" stroke="#8e7cbb" stroke-width="1.8"/>
+<text x="876" y="590" fill="#f2ecff" font-size="24" font-weight="700" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">3   Information icon</text>
+<text x="876" y="621" fill="#d9d0f0" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Compact ⓘ button in the upper-right header.</text>
+<path d="M850 571L820 571" stroke="#9885d0" stroke-width="2" fill="none"/>
+<path d="M820 571L820 172" stroke="#9885d0" stroke-width="2" fill="none"/>
+<path d="M820 172L767 172" stroke="#9885d0" stroke-width="2" fill="none"/>
+<text x="855" y="737" fill="#a7b7c7" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Example text and folder path are illustrative.</text>
+<text x="855" y="766" fill="#a7b7c7" font-size="18" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">Features and widget names reflect v1.6.0.</text>
+<text x="58" y="944" fill="#93a4b6" font-size="16" font-weight="400" text-anchor="start" font-family="Segoe UI, Arial, sans-serif">© 2026 Werner de Jong • MIT License</text>
+</svg>
