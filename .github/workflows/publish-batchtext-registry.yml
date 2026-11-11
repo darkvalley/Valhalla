@@ -30,8 +30,11 @@ jobs:
       - name: Run JavaScript regression tests
         run: |
           node --check ComfyUI/Valhalla_BatchText/web/js/batch_text.js
+          node --check ComfyUI/Valhalla_BatchText/web/js/batch_text_inspector.js
           node ComfyUI/Valhalla_BatchText/tests/test_dynamic_ui.cjs
           node ComfyUI/Valhalla_BatchText/tests/test_order_persistence.cjs
+          node ComfyUI/Valhalla_BatchText/tests/test_inspector_integrated_ui.cjs
+          node ComfyUI/Valhalla_BatchText/tests/test_inspector_ui.cjs
 
       - name: Check publishing credentials
         env:
@@ -66,7 +69,7 @@ jobs:
           assert len(archives) == 1, f"Expected exactly one package ZIP, found: {archives}"
           with ZipFile(archives[0]) as archive:
               names = set(archive.namelist())
-          required = {"__init__.py", "batch_text.py", "web/js/batch_text.js", "pyproject.toml", "LICENSE", "README.md"}
+          required = {"__init__.py", "batch_text.py", "web/js/batch_text.js", "web/js/batch_text_inspector.js", "pyproject.toml", "LICENSE", "README.md"}
           assert required <= names, f"Missing files: {sorted(required - names)}"
           assert not any(name.startswith(("tests/", "ComfyUI/", ".github/")) for name in names), "Unexpected source or test folders"
           print(f"Verified {archives[0]}: {len(names)} files, only the custom node payload")
@@ -79,4 +82,4 @@ jobs:
         run: |
           comfy node publish \
             --token "$REGISTRY_ACCESS_TOKEN" \
-            --changelog-file RELEASE_NOTES_v1.5.4.md
+            --changelog-file RELEASE_NOTES_v1.6.0.md
