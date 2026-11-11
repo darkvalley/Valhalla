@@ -1,9 +1,10 @@
-# Valhalla Batch Text v1.5.4 — Illustrated documentation
+# Valhalla Batch Text v1.6.0 — Illustrated documentation
 
 The complete English user guide and five editable SVG diagrams are in this folder.
 
 - [Wiki Home](wiki/Home.md)
-- [Reordering Inputs — NEW](wiki/Reordering-Inputs.md)
+- [Preview and Logging — NEW](wiki/Preview-and-Logging.md)
+- [Reordering Inputs](wiki/Reordering-Inputs.md)
 - [Using TEXT_LIST](wiki/Using-TEXT-LIST.md)
 - [Combining Inputs and Delimiters](wiki/Combining-Inputs-and-Delimiters.md)
 - [Installation and Troubleshooting](wiki/Installation-and-Troubleshooting.md)
