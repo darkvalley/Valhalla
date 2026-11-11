@@ -1,10 +1,10 @@
 # Publish the Valhalla Batch Text Wiki
 
-The actual GitHub Wiki uses a **separate Git repository**, `https://github.com/darkvalley/Valhalla.wiki.git`. This directory contains the English Markdown pages for v1.5.4. The SVG diagrams live under `docs/images/` in the main repository and are linked through raw GitHub URLs.
+The actual GitHub Wiki uses a **separate Git repository**, `https://github.com/darkvalley/Valhalla.wiki.git`. This directory contains the English Markdown pages for v1.6.0. The SVG diagrams live under `docs/images/` in the main repository and are linked through raw GitHub URLs.
 
 ## Recommended: GitHub Actions
 
-[The Publish Valhalla Batch Text Wiki workflow](https://github.com/darkvalley/Valhalla/actions/workflows/publish-batchtext-wiki.yml) runs when Wiki source Markdown pages change, and supports **Run workflow** from the Actions tab. It clones and synchronizes the seven Wiki pages with the existing Wiki without force-pushing.
+[The Publish Valhalla Batch Text Wiki workflow](https://github.com/darkvalley/Valhalla/actions/workflows/publish-batchtext-wiki.yml) runs when Wiki source Markdown pages change, and supports **Run workflow** from the Actions tab. It clones and synchronizes the eight Wiki pages with the existing Wiki without force-pushing.
 
 For the first publication, the workflow also attempts a safe initial `master` push if the Wiki is not yet accessible. If GitHub rejects that push, open https://github.com/darkvalley/Valhalla/wiki, create/save an initial `Home` page (contents in [`Home.md`](Home.md)), then use **Actions → Publish Valhalla Batch Text Wiki → Run workflow**. GitHub does not always expose the Wiki Git remote until this first page exists.
 
