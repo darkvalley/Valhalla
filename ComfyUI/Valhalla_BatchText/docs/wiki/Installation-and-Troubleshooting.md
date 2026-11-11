@@ -1,4 +1,6 @@
-# Installation and Troubleshooting — v1.5.4
+# Installation and Troubleshooting — v1.6.0
+
+**New in v1.6.0:** Optional read-only, resizable combined-text preview (off by default), character counter, max_chars, cumulative full-text logging (off by default), persistent single log-folder chooser, and a compact header Info icon. [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging).
 
 ## Manual installation (Windows)
 
@@ -10,7 +12,7 @@
 
 Alternatively, download the full [Valhalla repository](https://github.com/darkvalley/Valhalla) outside `custom_nodes` and copy only its `ComfyUI/Valhalla_BatchText` folder.
 
-The custom node folder should contain `__init__.py`, `batch_text.py`, and `web/js/batch_text.js`. Do not copy the whole Valhalla repository into `custom_nodes`. No additional Python packages are needed.
+The custom node folder should contain `__init__.py`, `batch_text.py`, , `web/js/batch_text.js`, and `web/js/batch_text_inspector.js`. Do not copy the whole Valhalla repository into `custom_nodes`. No additional Python packages are needed.
 
 The optional included PowerShell installer may be run from the source directory using the actual `-ComfyUIRoot` path.
 
