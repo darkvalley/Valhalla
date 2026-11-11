@@ -258,3 +258,138 @@ async function chooseFolder(node) {
     setStatus(node, `Logmap kiezen mislukt: ${error.message}`, true);
     console.warn("Batch Text: logmap kiezen mislukt", error);
   }
+}
+function setCounter(node, total, visible) {
+  const n = Math.max(0, Math.trunc(total));
+  const v = Math.min(n, Math.max(0, Math.trunc(visible)));
+  const text = v < n ? `${COUNTER_FORMAT.format(v)} / ${COUNTER_FORMAT.format(n)} tekens` :
+                       `${COUNTER_FORMAT.format(n)} tekens`;
+  node.valhallaBatchCounterText = text;
+  if (node.valhallaBatchCounter) node.valhallaBatchCounter.textContent = text;
+}
+function unmountCounter(node) {
+  if (node.__batchIntegratedPreview) return; // Counter belongs to the DOM panel.
+  node.valhallaBatchCounter?.remove();
+  node.valhallaBatchCounter = null;
+  if (node.valhallaBatchCounterContainer && node.valhallaBatchCounterPositionChanged) {
+    node.valhallaBatchCounterContainer.style.position = node.valhallaBatchOldPosition;
+  }
+  node.valhallaBatchCounterContainer = null;
+  node.valhallaBatchCounterPositionChanged = false;
+}
+function mountCounter(node) {
+  if (node.__batchIntegratedPreview) return;
+  if (typeof document === "undefined" || !asBoolean(find(node, "show_preview")?.value)) return;
+  const container = node.valhallaBatchPreviewWidget?.element?.parentElement;
+  if (!container || container === document.body || !container.appendChild ||
+      container.querySelectorAll?.("textarea")?.length > 1) return;
+  if (node.valhallaBatchCounterContainer === container && node.valhallaBatchCounter?.isConnected) return;
+  unmountCounter(node);
+  const badge = document.createElement("span");
+  badge.textContent = node.valhallaBatchCounterText || "0 tekens";
+  badge.setAttribute("aria-label", "Aantal tekens in Batch Text preview");
+  badge.style.cssText = "position:absolute;right:18px;bottom:5px;z-index:10;" +
+    "font:11px/16px system-ui,sans-serif;font-variant-numeric:tabular-nums;" +
+    "padding:1px 5px;border:1px solid #566172;border-radius:4px;" +
+    "background:#20242d;color:#e5e7eb;pointer-events:none;white-space:nowrap";
+  node.valhallaBatchOldPosition = container.style.position;
+  node.valhallaBatchCounterPositionChanged = !container.style.position || container.style.position === "static";
+  if (node.valhallaBatchCounterPositionChanged) container.style.position = "relative";
+  container.appendChild(badge);
+  node.valhallaBatchCounter = badge;
+  node.valhallaBatchCounterContainer = container;
+}
+function scheduleCounterMount(node) {
+  if (node.__batchIntegratedPreview) return;
+  if (node.__batchCounterPending) return;
+  node.__batchCounterPending = true;
+  let attempts = 0;
+  const tick = () => {
+    if (node.__batchInspectorRemoved || !asBoolean(find(node, "show_preview")?.value)) {
+      node.__batchCounterPending = false;
+      return;
+    }
+    mountCounter(node);
+    if (node.valhallaBatchCounter?.isConnected || ++attempts >= 30 ||
+        typeof requestAnimationFrame !== "function") {
+      node.__batchCounterPending = false;
+      return;
+    }
+    requestAnimationFrame(tick);
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(tick);
+  else tick();
+}
+function countCodePoints(text) { let count=0; for (const _ of text) count++; return count; }
+function payloadCount(data, fallback) {
+  const value = Array.isArray(data) ? data[0] : data;
+  const n = Number(value);
+  return value !== null && value !== undefined && value !== "" && Number.isSafeInteger(n) && n >= 0 ? n : fallback;
+}
+function renderPreview(node, data) {
+  const payload = data?.output?.text !== undefined ? data.output : data;
+  if (!payload || typeof payload !== "object") return;
+  const content = Array.isArray(payload.text) ? payload.text[0] : payload.text;
+  if (typeof content === "string" && node.valhallaBatchPreviewWidget) {
+    const widget = node.valhallaBatchPreviewWidget;
+    widget.value = content;
+    // ComfyUI modern frontend uses an internal widget state for DOM textareas.
+    // Update the actual textarea as well for versions where assigning value
+    // on the widget does not refresh the mounted control.
+    const textarea = node.__batchIntegratedPreview ? node.valhallaBatchTextArea : widget.element;
+    if (textarea && textarea.value !== content) textarea.value = content;
+    setCounter(node, payloadCount(payload.character_count, countCodePoints(content)),
+                   payloadCount(payload.displayed_character_count, countCodePoints(content)));
+    scheduleCounterMount(node);
+    updatePreviewGeometry(node);
+  }
+  const error = Array.isArray(payload.log_error) ? payload.log_error[0] : payload.log_error;
+  const path = Array.isArray(payload.log_path) ? payload.log_path[0] : payload.log_path;
+  if (error) setStatus(node, `Logging mislukt: ${error}`, true);
+  else if (path) setStatus(node, `Gelogeerd naar: ${path}`);
+  node.setDirtyCanvas?.(true, true);
+}
+function createIntegratedPreview(node) {
+  if (typeof document === "undefined" || typeof node.addDOMWidget !== "function") return null;
+  const panel = document.createElement("div");
+  panel.style.cssText = "position:relative;width:100%;height:100%;" +
+    "min-height:0;box-sizing:border-box;overflow:hidden";
+  const textarea = document.createElement("textarea");
+  textarea.readOnly = true;
+  textarea.spellcheck = false;
+  textarea.value = PREVIEW_DEFAULT;
+  textarea.setAttribute("aria-label", "Batch Text samengevoegde tekst preview");
+  textarea.style.cssText = "display:block;box-sizing:border-box;width:100%;height:100%;" +
+    "min-height:0;resize:none;overflow:auto;padding:6px 8px 28px;" +
+    "border:1px solid #353535;background:#1e1e1e;color:#e8e8e8;" +
+    "font:12px/1.45 Consolas,'Courier New',monospace;white-space:pre-wrap";
+  const counter = document.createElement("span");
+  counter.textContent = "0 tekens";
+  counter.setAttribute("aria-label", "Aantal tekens in Batch Text preview");
+  counter.style.cssText = "position:absolute;right:9px;bottom:8px;z-index:1;" +
+    "font:11px/16px system-ui,sans-serif;font-variant-numeric:tabular-nums;" +
+    "padding:1px 5px;border:1px solid #566172;border-radius:4px;" +
+    "background:#20242d;color:#e5e7eb;pointer-events:none;white-space:nowrap";
+  panel.appendChild(textarea);
+  panel.appendChild(counter);
+  const widget = node.addDOMWidget("preview", "customtext", panel, {
+    serialize: false, margin: 9,
+    getValue: () => textarea.value,
+    setValue: value => { textarea.value = String(value ?? ""); },
+    getMinHeight: () => MIN_PREVIEW_HEIGHT,
+    // No getMaxHeight and NO computeSize: remaining node height is distributed
+    // to this growable widget by LiteGraph._arrangeWidgets.
+  });
+  widget.serialize = false;
+  widget.options ??= {};
+  widget.options.serialize = false;
+  // Some frontend wrappers inject computeSize; remove it for DOM allocation.
+  // A real DOMWidgetImpl exposes computeLayoutSize, which must be selected.
+  if (typeof widget.computeLayoutSize === "function" &&
+      Object.prototype.hasOwnProperty.call(widget, "computeSize")) {
+    delete widget.computeSize;
+  }
+  node.__batchIntegratedPreview = true;
+  node.valhallaBatchTextArea = textarea;
+  node.valhallaBatchCounter = counter;
+  return widget;
