@@ -8,7 +8,11 @@ Batch Text joins any number of `STRING` inputs and an optional native `STRING` l
 
 **v1.5.4:** change the processing order using the **up/down arrows** next to input sockets. The selected order and its original cables remain intact after saving and reopening a workflow, including after a ComfyUI restart.
 
-![Batch Text node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
+![Batch Text v1.6.0 showing preview and logging](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/06-preview-and-logging-v1.6.0.svg)
+
+*The illustrated v1.6.0 interface with **show_preview** and **write_log** enabled. Example text and folder path are illustrative.*
+
+[Earlier input-order diagram](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg) · [Preview and Logging details](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging)
 
 ## Documentation
 
