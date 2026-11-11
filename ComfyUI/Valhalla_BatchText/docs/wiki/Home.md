@@ -1,4 +1,6 @@
-# Valhalla Batch Text v1.5.4 — Wiki
+# Valhalla Batch Text v1.6.0 — Wiki
+
+**New in v1.6.0:** Optional read-only, resizable combined-text preview (off by default), character counter, max_chars, cumulative full-text logging (off by default), persistent single log-folder chooser, and a compact header Info icon. [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging).
 
 **ComfyUI • Conceived and created by Werner de Jong • © 2026 • MIT License**
 
