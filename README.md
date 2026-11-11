@@ -6,11 +6,11 @@ This repository hosts open-source components developed for the **Valhalla** crea
 
 A custom ComfyUI node that concatenates an optional native `STRING` list and unlimited dynamic individual text inputs, with a delimiter dropdown, custom separators, an English help popup, and up/down arrows that control the actual processing order of inputs. **In v1.5.4 the selected input order and its original cables are restored after saving, reloading or restarting ComfyUI**, including on modern link stores.
 
-**[Official v1.5.4 release (ZIP download)](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4)** · [Direct ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.4/Valhalla_BatchText_v1.5.4.zip)
+**[Official v1.6.0 release (ZIP download)](https://github.com/darkvalley/Valhalla/releases/tag/v1.6.0)** · [Direct ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.0/Valhalla_BatchText_v1.6.0.zip)
 
 **[Source code, installation and English documentation](ComfyUI/Valhalla_BatchText/README.md)**  
 **[Illustrated user guide and GitHub Wiki source](ComfyUI/Valhalla_BatchText/docs/README.md)** — diagrams, examples, reorder/cable-following instructions, and Wiki publishing guidance.  
-**[Release notes v1.5.4](ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.5.4.md)**
+**[Release notes v1.6.0](ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.0.md)**
 
 **Created by Werner de Jong.** © 2026 Werner de Jong. MIT License. The node has its own [`LICENSE`](ComfyUI/Valhalla_BatchText/LICENSE).
 
@@ -22,7 +22,7 @@ Optional **Show Preview** (off by default) displays the combined text with a cha
 
 **[v1.6.0 release notes](ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.0.md)** · **[Preview and Logging Wiki guide](ComfyUI/Valhalla_BatchText/docs/wiki/Preview-and-Logging.md)** · [Current source](ComfyUI/Valhalla_BatchText/)
 
-The v1.5.4 release download linked above is the **previous tagged archive**; the v1.6.0 source is in the repository.
+Previous stable release: [v1.5.4](https://github.com/darkvalley/Valhalla/releases/tag/v1.5.4).
 
 ## Comfy Registry publishing (maintainers)
 
