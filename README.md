@@ -2,7 +2,7 @@
 
 This repository hosts open-source components developed for the **Valhalla** creative workflow.
 
-## ComfyUI Batch Text (v1.5.4)
+## ComfyUI Batch Text (v1.6.0)
 
 A custom ComfyUI node that concatenates an optional native `STRING` list and unlimited dynamic individual text inputs, with a delimiter dropdown, custom separators, an English help popup, and up/down arrows that control the actual processing order of inputs. **In v1.5.4 the selected input order and its original cables are restored after saving, reloading or restarting ComfyUI**, including on modern link stores.
 
@@ -15,6 +15,14 @@ A custom ComfyUI node that concatenates an optional native `STRING` list and unl
 **Created by Werner de Jong.** © 2026 Werner de Jong. MIT License. The node has its own [`LICENSE`](ComfyUI/Valhalla_BatchText/LICENSE).
 
 > **Installation note:** Clone or download the repository outside ComfyUI first. Copy the `ComfyUI/Valhalla_BatchText` folder into your ComfyUI `custom_nodes` directory, or use the included PowerShell installer. Do not clone the entire repository directly into `custom_nodes`.
+
+### New in v1.6.0 — Integrated Text Inspector
+
+Optional **Show Preview** (off by default) displays the combined text with a character counter, a configurable 200,000-character display limit, and a dynamically resizable preview. The top-right **ⓘ** opens help. Optional **Write Log** (off by default) reveals the saved log folder and a single **Choose log folder...** button. Full-text UTF-8 logs append to a workflow-specific file. The workflow directory is the default location when known. The original TEXT output and connections remain unchanged.
+
+**[v1.6.0 release notes](ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.0.md)** · **[Preview and Logging Wiki guide](ComfyUI/Valhalla_BatchText/docs/wiki/Preview-and-Logging.md)** · [Current source](ComfyUI/Valhalla_BatchText/)
+
+The v1.5.4 release download linked above is the **previous tagged archive**; the v1.6.0 source is in the repository.
 
 ## Comfy Registry publishing (maintainers)
 
