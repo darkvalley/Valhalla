@@ -1,6 +1,8 @@
 # Batch Text — Overview
 
-Valhalla Batch Text v1.5.4 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
+**New in v1.6.0:** Optional read-only, resizable combined-text preview (off by default), character counter, max_chars, cumulative full-text logging (off by default), persistent single log-folder chooser, and a compact header Info icon. [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging).
+
+Valhalla Batch Text v1.6.0 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
 
 ![Node overview](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg)
 
