@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from datetime import datetime
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -18,8 +19,12 @@ class InspectorReleaseTests(unittest.TestCase):
         self.assertFalse(optional["show_preview"][1]["default"])
         self.assertFalse(optional["write_log"][1]["default"])
         self.assertTrue(Node.OUTPUT_NODE)
-        self.assertEqual(Node.join_text(show_preview=[False], write_log=[True],
-                                        **{"TEXT:0": ["original"]}), ("original",))
+        result = Node.join_text(show_preview=[False], write_log=[True],
+                                **{"TEXT:0": ["original"]})
+        self.assertEqual(result["result"], ("original",))
+        self.assertEqual(result["ui"]["text"], [""])
+        self.assertTrue(result["ui"]["log_error"][0])
+        self.assertTrue(math.isnan(Node.IS_CHANGED(show_preview=False, write_log=True)))
         self.assertIsNone(Node.IS_CHANGED(show_preview=False))
         self.assertTrue(math.isnan(Node.IS_CHANGED(show_preview=True)))
 
@@ -43,13 +48,19 @@ class InspectorReleaseTests(unittest.TestCase):
             second = Node.join_text(**arguments, **{"TEXT:0":"DEF"})
             target = Path(first["ui"]["log_path"][0])
             self.assertEqual(target, Path(second["ui"]["log_path"][0]))
-            self.assertEqual(target.name, "Test_Workflow_20261111_190000_123.txt")
+            self.assertEqual(target.name, f"Test_Workflow_{datetime.now():%Y%m%d}.txt")
             self.assertIn("ABC", target.read_text(encoding="utf-8"))
             self.assertIn("DEF", target.read_text(encoding="utf-8"))
             before = target.read_bytes()
-            Node.join_text(show_preview=False, write_log=True, log_folder=folder,
-                           extra_pnginfo=workflow, **{"TEXT:0":"NOT WRITTEN"})
-            self.assertEqual(target.read_bytes(), before)
+            log_only = Node.join_text(show_preview=False, write_log=True, log_folder=folder,
+                                      extra_pnginfo=workflow, unique_id=7,
+                                      **{"TEXT:0":"THIRD ENTRY"})
+            self.assertEqual(log_only["ui"]["text"], [""])
+            self.assertNotEqual(target.read_bytes(), before)
+            final = target.read_text(encoding="utf-8")
+            self.assertIn("THIRD ENTRY", final)
+            self.assertEqual(final.count("------------------------------------------------------------------"), 3)
+            self.assertIn("ValhallaBatchText - Batch Text", final)
 
     def test_workflow_folder_auto_and_nonexistent_path(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -45,7 +45,7 @@ jobs:
           test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text_inspector.js)" = "ada8850ced94d40d6f2679e58e690a9c7dbd273b"
           test "$(git hash-object ComfyUI/Valhalla_BatchText/pyproject.toml)" = "740fde2f4f4592845bd8dd445fe9a7103cff17d0"
           test "$(git hash-object ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.3.md)" = "d88e0c318429ebe39b1be1aff79164df2c887007"
-          grep -Fxq 'version = "1.6.0"' ComfyUI/Valhalla_BatchText/pyproject.toml
+          grep -Fxq 'version = "1.6.3"' ComfyUI/Valhalla_BatchText/pyproject.toml
 
       - name: Run Python regression tests
         run: python -m unittest discover -s ComfyUI/Valhalla_BatchText/tests -p "test_*.py" -v
