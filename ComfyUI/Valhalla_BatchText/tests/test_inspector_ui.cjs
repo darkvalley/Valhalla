@@ -53,7 +53,7 @@ let infoClicks=0;node.addWidget('button','ⓘ  Info',null,()=>{infoClicks++},{})
 registered[0].nodeCreated(node);
 const get=name=>node.widgets.find(w=>w.name===name);
 assert.equal(get('preview').hidden,true);
-assert.equal(get('write_log').hidden,true);
+assert.equal(get('write_log').hidden,false); // v1.6.3: logging independent of preview
 assert.equal(get('📁 Choose log folder...').hidden,true);
 get('show_preview').value=true;get('show_preview').callback(true);
 assert.equal(get('preview').hidden,false);
@@ -79,4 +79,4 @@ assert.equal(node.onMouseDown({button:0},[node.size[0]-38,-4]),true);
 assert.equal(infoClicks,1);
 node.onRemoved();
 assert.equal(listeners.get('executed')?.size,0);
-console.log('OK: Batch Text v1.6.0 preview, resize, toggles and Info icon');
+console.log('OK: Batch Text v1.6.3 preview, independent logging, resize and Info icon');
