@@ -6,7 +6,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $source = $PSScriptRoot
-$pages = @('Home.md','Batch-Text.md','Reordering-Inputs.md','Using-TEXT-LIST.md','Combining-Inputs-and-Delimiters.md','Installation-and-Troubleshooting.md','_Sidebar.md')
+$pages = @('Home.md','Batch-Text.md','Automatic-and-Manual-Input-Labels.md','Reordering-Inputs.md','Using-TEXT-LIST.md','Combining-Inputs-and-Delimiters.md','Installation-and-Troubleshooting.md','_Sidebar.md')
 foreach($page in $pages) {
   if(-not (Test-Path -LiteralPath (Join-Path $source $page))) { throw "Missing Wiki page: $page" }
 }
@@ -26,7 +26,7 @@ if($LASTEXITCODE -ne 0) { throw 'git add failed' }
 & git -C $WorkDirectory diff --cached --quiet
 if($LASTEXITCODE -eq 0) { Write-Host 'Wiki is up to date.'; exit 0 }
 if($LASTEXITCODE -ne 1) { throw 'git diff failed' }
-& git -C $WorkDirectory commit -m 'Update Batch Text v1.5.4 Wiki with persistent input ordering'
+& git -C $WorkDirectory commit -m 'Update Batch Text v1.6.3 Wiki with daily logging and port labels'
 if($LASTEXITCODE -ne 0) { throw 'git commit failed; check user name and email.' }
 & git -C $WorkDirectory push
 if($LASTEXITCODE -ne 0) { throw 'git push failed; check GitHub login/permissions.' }

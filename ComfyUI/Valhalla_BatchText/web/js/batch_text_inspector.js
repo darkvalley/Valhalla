@@ -1,4 +1,4 @@
-/** Optional Text Inspector UI for Valhalla Batch Text v1.6.0.
+/** Optional Text Inspector UI for Valhalla Batch Text v1.6.3.
  * No new node identity; all v1.5.4 saved widget positions remain compatible.
  * © 2026 Werner de Jong — MIT License.
  */
@@ -8,6 +8,8 @@ import { ComfyWidgets } from "../../scripts/widgets.js";
 
 const CLASS_NAME = "ValhallaBatchText";
 const BASE = "/valhalla/batch_text";
+const LOG_FOLDER_PROPERTY = "valhalla_batch_text_log_folder";
+const LOG_FOLDER_SCHEMA = "valhalla_batch_text_log_folder_schema";
 const VISIBLE_MAX = 2000000;
 const MIN_PREVIEW_HEIGHT = 150;
 const WIDGET_ROW_GAP = 4;
@@ -21,6 +23,63 @@ const COUNTER_FORMAT = new Intl.NumberFormat("nl-NL");
 function find(node, name) { return (node.widgets ?? []).find(w => w.name === name); }
 function asBoolean(value) { return value === true || value === 1 || String(value).toLowerCase() === "true"; }
 function savedWidgetValue(widget) { return widget?.value ?? ""; }
+
+// Hidden widget values can be lost between ComfyUI frontend builds.
+// Persist the chosen folder in named node properties as well as the widget.
+function serializableIndex(node, name) {
+  return (node.widgets ?? []).filter(w => w.serialize !== false).findIndex(w => w.name === name);
+}
+function storedLogFolder(node) {
+  return String(find(node, "log_folder")?.value ?? "");
+}
+function setLogFolder(node, value) {
+  const folder = String(value ?? "");
+  const widget = find(node, "log_folder");
+  if (widget) widget.value = folder;
+  node.properties ??= {};
+  node.properties[LOG_FOLDER_PROPERTY] = folder;
+  node.properties[LOG_FOLDER_SCHEMA] = 1;
+}
+function saveLogFolder(node, data) {
+  const path = storedLogFolder(node);
+  setLogFolder(node, path);
+  if (!data || typeof data !== "object") return;
+  data.properties ??= {};
+  data.properties[LOG_FOLDER_PROPERTY] = path;
+  data.properties[LOG_FOLDER_SCHEMA] = 1;
+  if (data.widgets_values_named && typeof data.widgets_values_named === "object") {
+    data.widgets_values_named.log_folder = path;
+  }
+  const index = serializableIndex(node, "log_folder");
+  if (index >= 0 && Array.isArray(data.widgets_values) && index < data.widgets_values.length) {
+    data.widgets_values[index] = path;
+  }
+}
+function restoreLogFolder(node, data) {
+  if (!data || typeof data !== "object") return;
+  const props = data.properties ?? {};
+  const own = (value, key) => Object.prototype.hasOwnProperty.call(value ?? {}, key);
+  let path;
+  if (own(props, LOG_FOLDER_PROPERTY)) {
+    path = props[LOG_FOLDER_PROPERTY];
+  } else if (own(data.widgets_values_named, "log_folder")) {
+    path = data.widgets_values_named.log_folder;
+  } else {
+    const index = serializableIndex(node, "log_folder");
+    const raw = index >= 0 ? data.widgets_values?.[index] : undefined;
+    if (typeof raw === "string" && raw.trim()) path = raw;
+    else if (storedLogFolder(node)) path = storedLogFolder(node);
+  }
+  if (typeof path === "string") setLogFolder(node, path);
+}
+function protectStoredLogFolderWidget(node) {
+  const widget = find(node, "log_folder");
+  if (!widget) return;
+  widget.serialize = true;
+  widget.options ??= {};
+  widget.options.serialize = true;
+  widget.serializeValue = () => storedLogFolder(node);
+}
 function workflowHint() {
   const wf = app.workflowManager?.activeWorkflow;
   const path = [wf?.path, wf?.filename, wf?.name,
@@ -49,7 +108,10 @@ function setHidden(widget, hidden) {
   };
   widget.hidden = hidden;
   widget.options.hidden = hidden;
-  widget.type = hidden ? "hidden" : widget.__batchOriginalLayout.type;
+  // Keep serialized schema widgets at their original type, even when hidden.
+  widget.type = widget.name === "log_folder" || widget.name === "workflow_hint"
+    ? widget.__batchOriginalLayout.type
+    : (hidden ? "hidden" : widget.__batchOriginalLayout.type);
   widget.computeSize = hidden ? () => [0, -4] : widget.__batchOriginalLayout.computeSize;
   // ComfyUI's multiline widgets are DOM-backed. Hide their own container,
   // not a global overlay that could belong to other nodes.
@@ -175,9 +237,9 @@ function drawInfoIcon(node, ctx) {
 }
 function updateVisibility(node) {
   const enabled = asBoolean(find(node, "show_preview")?.value);
-  const writing = enabled && asBoolean(find(node, "write_log")?.value);
+  const writing = asBoolean(find(node, "write_log")?.value);
   // Backend schema widgets stay in place for saved workflow compatibility.
-  setHidden(find(node, "write_log"), !enabled);
+  setHidden(find(node, "write_log"), false);
   setHidden(find(node, "log_folder"), true);
   setHidden(find(node, "workflow_hint"), true);
   setHidden(node.valhallaBatchLogDisplay, !writing);
@@ -215,8 +277,7 @@ function setStatus(node, message, error = false) {
   node.setDirtyCanvas?.(true, true);
 }
 async function checkFolder(node) {
-  if (!asBoolean(find(node, "show_preview")?.value) ||
-      !asBoolean(find(node, "write_log")?.value)) return;
+  if (!asBoolean(find(node, "write_log")?.value)) return;
   const hint = workflowHint() || savedWidgetValue(find(node, "workflow_hint"));
   const folder = String(savedWidgetValue(find(node, "log_folder")));
   const query = new URLSearchParams({ path:folder, workflow_hint:hint });
@@ -249,7 +310,7 @@ async function chooseFolder(node) {
     const result = await response.json();
     if (!response.ok) throw Error(result.error || `HTTP ${response.status}`);
     if (result.path) {
-      hidden.value = result.path; // always the ONLY stored path, never a second browse field
+      setLogFolder(node, result.path); // always the ONLY stored path, never a second browse field
       node.valhallaBatchLogDisplay.value = result.path;
       await checkFolder(node);
       node.graph?.setDirtyCanvas?.(true, true);
@@ -397,6 +458,7 @@ function createIntegratedPreview(node) {
 function insertInspectorWidgets(node) {
   if (node.__batchInspectorInstalled || !find(node, "show_preview")) return;
   node.__batchInspectorInstalled = true;
+  protectStoredLogFolderWidget(node);
   const hint = find(node, "workflow_hint");
   if (hint) {
     hint.serializeValue = () => {
@@ -407,7 +469,7 @@ function insertInspectorWidgets(node) {
   const display = node.addWidget?.("text", "Logmap", "", value => {
     // Editing the displayed path is also supported: clearing it restores AUTO.
     const stored = find(node, "log_folder");
-    if (stored) stored.value = String(value ?? "");
+    if (stored) setLogFolder(node, value);
     void checkFolder(node);
   }, {serialize:false});
   if (display) {
@@ -479,14 +541,17 @@ app.registerExtension({
     const oldConfigure = node.onConfigure;
     node.onConfigure = function(...args) {
       const value = oldConfigure?.apply(this,args);
-      // Current ComfyUI restores schema values before onConfigure returns.
+      restoreLogFolder(this, args[0]);
+      protectStoredLogFolderWidget(this);
       updateVisibility(this);
       return value;
     };
     const oldSerialize = node.onSerialize;
     node.onSerialize = function(...args) {
       find(this, "workflow_hint")?.serializeValue?.();
+      protectStoredLogFolderWidget(this);
       const result = oldSerialize?.apply(this,args);
+      saveLogFolder(this, args[0]);
       if (asBoolean(find(this, "write_log")?.value)) void checkFolder(this);
       return result;
     };

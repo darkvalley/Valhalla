@@ -1,39 +1,32 @@
-# Installation and Troubleshooting — v1.6.0
+# Installation and Troubleshooting — v1.6.3
 
-**New in v1.6.0:** Optional read-only, resizable combined-text preview (off by default), character counter, max_chars, cumulative full-text logging (off by default), persistent single log-folder chooser, and a compact header Info icon. [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging).
+## Install on ComfyUI
 
-## Manual installation (Windows)
+1. Stop the ComfyUI server.
+2. Download [Valhalla Batch Text v1.6.3 (ZIP)](https://github.com/darkvalley/Valhalla/releases/download/v1.6.3/Valhalla_BatchText_v1.6.3.zip).
+3. Back up any previous `custom_nodes/Valhalla_BatchText` folder.
+4. Extract the ZIP into `custom_nodes`, so the file `custom_nodes/Valhalla_BatchText/__init__.py` exists.
+5. Restart ComfyUI and hard-refresh the browser with `Ctrl+F5` or `Ctrl+Shift+R`.
+6. Add **Batch Text** from `Valhalla's Calling/Text`.
 
-1. Stop ComfyUI completely.
-2. [Download the official v1.5.4 installation ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.5.4/Valhalla_BatchText_v1.5.4.zip).
-3. Unzip it and copy the included `Valhalla_BatchText` folder into your ComfyUI installation's `custom_nodes` directory, backing up or replacing an earlier version.
-4. Restart ComfyUI, then use `Ctrl+Shift+R` in your browser.
-5. Add the `Batch Text` node under `Valhalla's Calling/Text`.
+The install folder must include `batch_text.py`, `__init__.py`, `web/js/batch_text.js` and `web/js/batch_text_inspector.js`. No additional Python dependencies are required. Do not extract the entire Valhalla GitHub repository into `custom_nodes`.
 
-Alternatively, download the full [Valhalla repository](https://github.com/darkvalley/Valhalla) outside `custom_nodes` and copy only its `ComfyUI/Valhalla_BatchText` folder.
+## Common issues
 
-The custom node folder should contain `__init__.py`, `batch_text.py`, , `web/js/batch_text.js`, and `web/js/batch_text_inspector.js`. Do not copy the whole Valhalla repository into `custom_nodes`. No additional Python packages are needed.
+**Port labels show TEXT:0 rather than scene_text.** Ensure the input is connected to a source output with a name. Verify v1.6.3 is installed and there is no second older copy. The actual input name is intentionally `TEXT:n`.
 
-The optional included PowerShell installer may be run from the source directory using the actual `-ComfyUIRoot` path.
+**My manual slot name disappeared.** Use **Rename Slot**, save the workflow and reload. v1.6.3 stores these names separately in workflow properties.
 
-## Troubleshooting
+**Log folder reset after upgrade.** Choose the folder again if an older workflow had already lost its path, then save. v1.6.3 persists `properties.valhalla_batch_text_log_folder` and restores it on reload.
 
-**No arrows / old interface:** confirm the installed files come from v1.5.4, restart ComfyUI and hard-refresh. Check that you do not have multiple installed copies of the node.
+**Multiple timestamped files per run.** Batch Text now uses one `<workflow>_YYYYMMDD.txt` log. Another custom node called ValhallaTextStudio uses a separate logger; this release does not update it.
 
-**Sockets move but output still has the old order:** v1.5.0 could fail to serialize the order on some frontends. Use **v1.5.4**, which preserves the hidden `input_order` widget and moves linked cable endpoints safely. Save a fresh workflow and test again.
+**No log output.** Enable `write_log`, confirm the folder is writable, and inspect any error tooltip. Preview can remain disabled.
 
-**Inputs seem to change:** connected `TEXT:n` ports retain their names and original source cables when moved. Check the displayed top-to-bottom order against your text preview.
+**Wrong text order or rerouted cables.** Use the input up/down arrows and save the workflow. After upgrading, restart the server and browser fully.
 
-**Info or delimiter overlaps inputs:** remove duplicate outdated extensions, restart and hard refresh.
+**TEXT_LIST surprises.** A multiline STRING is one value, while a native list supplies separate values to the joiner.
 
-**Output duplicates text:** Batch Text does not deduplicate. Check whether identical strings are connected more than once.
+**Preview blank or improperly sized.** Turn on `show_preview`, run the workflow, and make sure both frontend JavaScript and backend Python belong to v1.6.3.
 
-**Unexpected TEXT_LIST result:** a multiline string and a native ComfyUI list are not interchangeable.
-
-## Attribution
-
-Conceived and created by Werner de Jong. © 2026. MIT License.
-
-**Port moves but cable still points to old row:** install v1.5.4 and fully restart ComfyUI; the revised link-store-safe movement uses a spare TEXT socket to reposition existing endpoints without disconnecting source links. Hard-refresh with `Ctrl+Shift+R`, and keep only one installed copy.
-
-**Selected port order resets after restarting ComfyUI:** update to v1.5.4, restart ComfyUI, hard-refresh the browser, select your desired order and save the workflow again. After reopening, the socket order and original cables should persist.
+[Batch Text](Batch-Text) · [Preview and Logging](Preview-and-Logging) · [Input Labels](Automatic-and-Manual-Input-Labels).

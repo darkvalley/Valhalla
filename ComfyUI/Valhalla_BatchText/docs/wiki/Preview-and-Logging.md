@@ -1,54 +1,61 @@
-# Preview and Logging — Batch Text v1.6.0
+# Preview and Logging — v1.6.3
 
-Batch Text v1.6.0 adds **optional text inspection and cumulative text logging** directly to the existing **Batch Text** node. There is no second inspector node and no change to the TEXT output connector, input ordering, native TEXT_LIST support, or delimiter behavior.
+Batch Text has two **independent** optional features: a read-only text preview and complete daily logs. Both are off by default.
 
-![Batch Text v1.6.0 with preview and logging enabled](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/06-preview-and-logging-v1.6.0.svg)
+## Preview
 
-*Illustration of the v1.6.0 interface with both options enabled, a selected log folder and example combined text. Not a live ComfyUI screenshot.*
+Enable `show_preview` to see the complete combined output within the node, up to the `max_chars` display limit (default: 200,000 characters; configurable to 2,000,000). Resizing the node also resizes the preview. The actual TEXT output is never truncated.
 
-## Show Preview
+## Logging
 
-- **show_preview** is **off by default**. When off, the inspector controls and preview are hidden.
-- Turn **show_preview** on to see the combined text below the delimiter controls, together with the character counter and **max_chars**.
-- The preview is **read-only** and expands or shrinks with the node.
-- **max_chars** defaults to **200,000**, configurable from 100 to 2,000,000. This is a **display limit only**: the TEXT output and logs contain the full combined text, even when the preview is truncated.
-- The small **ⓘ** icon near the top-right corner opens the information dialog.
+Enable `write_log` to append the **full** combined text each time Batch Text runs. You do **not** need to turn on `show_preview`.
 
-## Write Log
+### File naming
 
-**write_log** is available when show_preview is enabled and is **off by default**.
+Each workflow gets one file **per day**:
 
-When write_log is switched **on**, two extra controls appear:
+`<workflow_name>_YYYYMMDD.txt`
 
-1. **Logmap** — the directory displayed within the node.
-2. **📁 Choose log folder...** — opens the server's folder chooser. The selected path is stored in the workflow and restored on reload.
+For example: `panel_creation_20261116.txt`.
 
-Switching write_log off hides these controls without unexpectedly resizing the node. It also stops new log writes.
+Every execution of every Batch Text node in the same workflow on that date appends another entry to the same file:
 
-Logs contain the **complete text**, not the shortened preview. Entries are appended in UTF-8 to a workflow-specific timestamped text file; multiple inspection entries in the same execution use a shared file when run metadata is available.
+~~~text
+------------------------------------------------------------------
+ValhallaBatchText - LoggingFirstPrompt 20261116 22:43:12
 
-### Where are logs saved?
 
-When log_folder is empty, NULL, None, or auto, Batch Text attempts to use the **directory containing the saved ComfyUI workflow**, including workflow subdirectories.
+moss_xvstyle
 
-If the original file location cannot be determined, it falls back to ComfyUI's configured **user/default/workflows** directory. Browsers cannot disclose the local filesystem path of an arbitrary imported JSON workflow; select a destination explicitly in that case.
+Prompt content...
 
-For another destination, use **Choose log folder...** or enter an existing directory in the Logmap field. The chosen location is saved with the workflow. Batch Text does not silently create directories that do not exist.
 
-**Windows note:** the native folder chooser runs on the **ComfyUI server machine** and is restricted to localhost requests. On non-Windows hosts or remote access, the native folder picker is not available; configure the path manually.
+------------------------------------------------------------------
+ValhallaBatchText - PromptTwo 20261116 22:48:10
 
-## Example
 
-Connect TEXT:0 = First paragraph and TEXT:1 = Second paragraph; select the Blank line delimiter. Enable show_preview to review both paragraphs within Batch Text. Enable write_log and choose an existing directory to keep a cumulative record after each execution. The TEXT output still sends the complete text unchanged to downstream nodes.
+More combined text...
+
+
+~~~
+
+The entry includes the node's visible title and local ComfyUI-server date/time. After midnight the first run creates the next day's file automatically. Previous files are never renamed or deleted.
+
+### Choosing a log folder
+
+With `write_log` enabled, use **Choose log folder...** or enter a valid directory. Batch Text writes to that existing folder, does not create missing folders, and records the location in the saved widget and `properties.valhalla_batch_text_log_folder`.
+
+When left empty, Batch Text attempts to use the saved workflow's directory. If the workflow's location cannot be resolved, it falls back to the configured `user/default/workflows` directory.
+
+The native folder picker requires a Windows ComfyUI server accessed on localhost. For remote or non-Windows installations, enter an existing path manually.
+
+**After upgrading:** If an earlier frontend version already discarded the chosen path, select the folder once again and save the workflow. v1.6.3 then restores it automatically on reload.
 
 ## Troubleshooting
 
-- **No preview:** enable show_preview, queue the workflow and check the input connections.
-- **Preview stays blank after execution:** restart ComfyUI, hard-refresh the browser (Ctrl+F5), and verify only one installation of Batch Text exists.
-- **Preview doesn't resize:** both Python and JavaScript files must be v1.6.0; the preview uses a flexible-height DOM widget.
-- **No log written:** enable both toggles, check directory existence and write permissions, and inspect the browse button tooltip for errors.
-- **Choose log folder is unavailable:** the GUI picker requires a local Windows ComfyUI server.
+- **No log:** ensure `write_log` is on, the folder exists and ComfyUI can write to it.
+- **New file for every run:** verify you are reading the Batch Text log and not a separate ValhallaTextStudio Text Inspector log. The latter uses an independent logger and is not changed by this release.
+- **Missing preview:** turn on `show_preview`, execute the workflow, and check the connections.
+- **Old UI:** remove duplicate node installations, restart ComfyUI and hard-refresh the browser.
 
-[Batch Text overview](Batch-Text) · [Reordering Inputs](Reordering-Inputs) · [Installation and Troubleshooting](Installation-and-Troubleshooting)
-
-© 2026 Werner de Jong · MIT License.
+[Batch Text](Batch-Text) · [Installation and Troubleshooting](Installation-and-Troubleshooting).

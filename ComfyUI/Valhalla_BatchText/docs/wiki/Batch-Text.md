@@ -1,34 +1,32 @@
-# Batch Text — Overview
+# Batch Text — Overview (v1.6.3)
 
-**New in v1.6.0:** Optional read-only, resizable combined-text preview (off by default), character counter, max_chars, cumulative full-text logging (off by default), persistent single log-folder chooser, and a compact header Info icon. [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging).
+Valhalla Batch Text is an expandable ComfyUI text joiner with a native list input, reorderable individual text inputs and an optional integrated inspector.
 
-Valhalla Batch Text v1.6.0 merges native ComfyUI text values using Python's `delimiter.join(parts)`.
+## Ports
 
-![Batch Text v1.6.0 preview and logging UI](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/06-preview-and-logging-v1.6.0.svg)
-
-*Illustrated v1.6.0 interface: both optional toggles enabled, log folder and preview visible. [See the earlier input-order diagram](https://raw.githubusercontent.com/darkvalley/Valhalla/main/ComfyUI/Valhalla_BatchText/docs/images/01-node-overview.svg).*
-
-
-## Connections
-
-| Connection | Purpose |
+| Port | Meaning |
 | --- | --- |
-| `☷ TEXT_LIST` | Optional native list of `STRING` items. A regular multiline string counts as one item. |
-| `TEXT:0`, `TEXT:1`, ... | Dynamically added ordinary text inputs. Connecting the last free slot adds another. |
-| `TEXT` | Single joined string output; connect to a prompt or text-preview node. |
+| `☷ TEXT_LIST` | Optional native STRING list; each list element is joined separately |
+| `TEXT:0`, `TEXT:1`, ... | Individual STRING inputs; a new free socket is created automatically |
+| `TEXT` | The complete joined string, suitable for prompts or other text nodes |
 
-## New: arrows control join order
+**New:** Connected inputs display the source output's visible name, such as `scene_text`. This is only a display label; the internal port ID is still `TEXT:0`. Manual names made with **Rename Slot** take precedence and persist. See [Automatic and Manual Input Labels](Automatic-and-Manual-Input-Labels).
 
-Move inputs using the small **up/down arrows** beside eligible sockets. The **current top-to-bottom order** determines the order of the concatenated values. `TEXT_LIST` may be moved below, above or between the numbered inputs. The linked cables are retained, and the processing order is saved in workflow metadata and `input_order` for Python execution. A saved workflow restores the same visible port order and cables after reopening.
+## Combining and ordering
 
-See [Reordering Inputs](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs) for a before/after example.
+Choose a delimiter (none, space, comma, semicolon, colon, pipe, tab, line break, blank line, or custom). The delimiter separates individual items, including elements of `TEXT_LIST`. The up/down buttons change processing order and move the original connected cables with their ports. The selected order survives saving and reloading the workflow.
 
-## Delimiters
+## Optional inspection
 
-Choose `None (direct)`, space, comma, semicolon, colon, pipe, tab, LF, CR, CRLF, blank line or `Custom`. Custom accepts literal text and supported escapes `\n`, `\r`, `\t` and `\\`. The delimiter is inserted **between each joined item**, including list elements.
+- `show_preview` displays the combined text read-only with a character counter and resizable preview.
+- `max_chars` limits only the visual preview; the TEXT output is always complete.
+- `write_log` writes the complete text to a daily workflow file, even if preview is turned off.
+- `log_folder` can be set with the folder chooser and is saved with the workflow.
 
-Other behavior: duplicates are preserved; connected empty strings count as elements; the node does not parse or deduplicate JSON or paths.
+For details, see [Preview and Logging](Preview-and-Logging) and [Reordering Inputs](Reordering-Inputs).
 
-## Attribution
+## Compatibility
 
-Conceived and created by Werner de Jong. © 2026. MIT License.
+Saved connection IDs, `TEXT:n` identifiers, the optional native list, output contract and previous delimiters remain compatible with older saved ComfyUI workflows.
+
+© 2026 Werner de Jong · MIT License.

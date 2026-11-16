@@ -2,11 +2,11 @@
 
 This repository hosts open-source components developed for the **Valhalla** creative workflow.
 
-## ComfyUI Batch Text (v1.6.0)
+## ComfyUI Batch Text (v1.6.3)
 
 A custom ComfyUI node that concatenates an optional native `STRING` list and unlimited dynamic individual text inputs, with a delimiter dropdown, custom separators, an English help popup, and up/down arrows that control the actual processing order of inputs. **In v1.5.4 the selected input order and its original cables are restored after saving, reloading or restarting ComfyUI**, including on modern link stores.
 
-**[Official v1.6.0 release (ZIP download)](https://github.com/darkvalley/Valhalla/releases/tag/v1.6.0)** · [Direct ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.0/Valhalla_BatchText_v1.6.0.zip)
+**[Official v1.6.3 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.6.3)** · [Download ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.3/Valhalla_BatchText_v1.6.3.zip)
 
 **[Source code, installation and English documentation](ComfyUI/Valhalla_BatchText/README.md)**  
 **[Illustrated user guide and GitHub Wiki source](ComfyUI/Valhalla_BatchText/docs/README.md)** — diagrams, examples, reorder/cable-following instructions, and Wiki publishing guidance.  
@@ -16,7 +16,15 @@ A custom ComfyUI node that concatenates an optional native `STRING` list and unl
 
 > **Installation note:** Clone or download the repository outside ComfyUI first. Copy the `ComfyUI/Valhalla_BatchText` folder into your ComfyUI `custom_nodes` directory, or use the included PowerShell installer. Do not clone the entire repository directly into `custom_nodes`.
 
-### New in v1.6.0 — Integrated Text Inspector
+### New in v1.6.3 — Daily logs and persistent port labels
+
+Daily log files use `<workflow_name>_YYYYMMDD.txt` and append a dated entry with a separator and Batch Text node title on each execution. Logging works independently of preview. The selected log folder is persisted in workflow properties across upgrades.
+
+Connected `TEXT:n` sockets display their source output name automatically (for example, `scene_text`). Manual **Rename Slot** labels override these automatic labels and survive save/reload/reordering. Internal `TEXT:n` names remain unchanged.
+
+[Release notes v1.6.3](ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.3.md) · [Updated Wiki](https://github.com/darkvalley/Valhalla/wiki)
+
+### Previously in v1.6.0 — Integrated Text Inspector
 
 Optional **Show Preview** (off by default) displays the combined text with a character counter, a configurable 200,000-character display limit, and a dynamically resizable preview. The top-right **ⓘ** opens help. Optional **Write Log** (off by default) reveals the saved log folder and a single **Choose log folder...** button. Full-text UTF-8 logs append to a workflow-specific file. The workflow directory is the default location when known. The original TEXT output and connections remain unchanged.
 

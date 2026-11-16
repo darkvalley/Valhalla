@@ -1,5 +1,5 @@
 /**
- * Valhalla Batch Text v1.6.0 — order persistence / restart fix.
+ * Valhalla Batch Text v1.6.3 — daily workflow logging + order persistence.
  * Existing node class, sockets, delimiter settings and original connections stay compatible.
  * © 2026 Werner de Jong — MIT License.
  */
@@ -14,6 +14,9 @@ const LIST_ICON = "☷";
 const ORDER_WIDGET_NAME = "input_order";
 const HELP_WIDGET_NAME = "ⓘ  Info";
 const ORDER_PROPERTY = "valhalla_batch_text_socket_order";
+// Display labels are separate from the stable TEXT:n socket IDs.
+const MANUAL_LABELS_PROPERTY = "valhalla_batch_text_manual_input_labels";
+const LABEL_SCHEMA_PROPERTY = "valhalla_batch_text_label_schema";
 const HELP_STYLE_ID = "valhalla-batch-text-info-styles";
 const CUSTOM_OPTION = "Custom";
 const SLOT_HEIGHT = 20;
@@ -71,6 +74,89 @@ function resizeNode(node) {
   }
   if (node.graph && typeof node.arrange === "function") node.arrange();
   node.setDirtyCanvas?.(true, true);
+}
+// Resolve the origin's visible output name; never rewrite input.name because
+// ComfyUI uses TEXT:n in prompt inputs and saved connection/order metadata.
+function sourceOutputLabel(node, slot) {
+  const link = inputLinkAt(node, slot);
+  if (!link || link.origin_id == null) return "";
+  const graph = node.graph;
+  let source = graph?.getNodeById?.(link.origin_id) ||
+    graph?._nodes_by_id?.[link.origin_id];
+  if (!source) source = (graph?._nodes || graph?.nodes || []).find?.(
+    n => String(n?.id) === String(link.origin_id));
+  const output = source?.outputs?.[Number(link.origin_slot ?? 0)];
+  const label = output?.label || output?.localized_name || output?.name;
+  return typeof label === "string" ? label.trim() : "";
+}
+function labelOverrides(node) {
+  return node.__valhallaManualInputLabels ??= Object.create(null);
+}
+function captureManualInputLabels(node) {
+  if (node.__valhallaRestoringInputLabels) return;
+  const manual = labelOverrides(node);
+  for (const input of node.inputs ?? []) {
+    if (!numberedInput(input.name)) continue;
+    const current = typeof input.label === "string" ? input.label.trim() : "";
+    const previouslyApplied = input.__valhallaLastAppliedLabel;
+    // LiteGraph Rename Slot writes input.label; preserve those user changes.
+    if (previouslyApplied !== undefined && current !== previouslyApplied) {
+      if (!current || current === input.name) delete manual[input.name];
+      else manual[input.name] = current;
+    } else if (previouslyApplied === undefined && current && current !== input.name &&
+               !Object.hasOwn(manual, input.name)) {
+      manual[input.name] = current;
+    }
+  }
+}
+function updateInputDisplayLabels(node) {
+  if (node.__valhallaRestoringInputLabels) return;
+  captureManualInputLabels(node);
+  const manual = labelOverrides(node);
+  let changed = false;
+  for (let slot = 0; slot < (node.inputs?.length ?? 0); slot++) {
+    const input = node.inputs[slot];
+    if (!numberedInput(input.name)) continue;
+    const label = manual[input.name] || sourceOutputLabel(node, slot) || input.name;
+    if (input.label !== label) {input.label = label;changed = true;}
+    input.__valhallaLastAppliedLabel = label;
+  }
+  if (changed) node.setDirtyCanvas?.(true, false);
+}
+function loadManualInputLabels(node, data) {
+  const properties = data?.properties ?? {};
+  const saved = properties[MANUAL_LABELS_PROPERTY];
+  const manual = Object.create(null);
+  if (saved && typeof saved === "object" && !Array.isArray(saved)) {
+    for (const [key, val] of Object.entries(saved)) {
+      if (numberedInput(key) && typeof val === "string" && val.trim() && val.trim() !== key)
+        manual[key] = val.trim();
+    }
+  } else if (!Object.hasOwn(properties, LABEL_SCHEMA_PROPERTY)) {
+    // Migrate historical manual labels from saved workflow inputs.
+    for (const input of data?.inputs ?? []) {
+      if (numberedInput(input?.name) && typeof input.label === "string" &&
+          input.label.trim() && input.label.trim() !== input.name)
+        manual[input.name] = input.label.trim();
+    }
+  }
+  node.__valhallaManualInputLabels = manual;
+  node.__valhallaRestoringInputLabels = true;
+}
+function saveManualInputLabels(node, data) {
+  captureManualInputLabels(node);
+  node.properties ??= {};
+  node.properties[MANUAL_LABELS_PROPERTY] = {...labelOverrides(node)};
+  node.properties[LABEL_SCHEMA_PROPERTY] = 1;
+  if (data && typeof data === "object") {
+    data.properties ??= {};
+    data.properties[MANUAL_LABELS_PROPERTY] = {...labelOverrides(node)};
+    data.properties[LABEL_SCHEMA_PROPERTY] = 1;
+    for (const input of data.inputs ?? []) {
+      const live = (node.inputs ?? []).find(x => x.name === input?.name);
+      if (live && numberedInput(input.name)) input.label = live.label;
+    }
+  }
 }
 function ensureListSocket(node) {
   let slot = (node.inputs ?? []).find(x => x.name === LIST_INPUT_NAME);
@@ -218,6 +304,7 @@ function moveSocket(node, slot, direction) {
   [updated[slot], updated[secondSlot]] = [secondInput, firstInput];
   node.inputs.splice(0, node.inputs.length, ...updated);
   syncOrderWidget(node);
+  updateInputDisplayLabels(node);
   resizeNode(node);
   if (node.graph) {
     if (typeof node.graph.incrementVersion === "function") node.graph.incrementVersion();
@@ -263,7 +350,6 @@ function restoreSocketIdentities(node) {
       input.label = `${LIST_ICON} TEXT_LIST`;
       input.shape = 1;
     } else {
-      input.label = input.name;
       delete input.shape;
     }
   }
@@ -296,6 +382,7 @@ function updateInputs(node) {
   if (node.__valhallaBatchTextUpdating) return;
   node.__valhallaBatchTextUpdating = true;
   try {
+    captureManualInputLabels(node);
     // Never discard dynamic sockets while ComfyUI is still restoring the graph.
     if (node.__valhallaAwaitingGraph) {
       const savedLinks = node.__valhallaSavedInputLinks;
@@ -315,7 +402,6 @@ function updateInputs(node) {
         input.name = `${PREFIX}${n}`;
       }
       names.add(input.name);
-      input.label = input.name;
       input.type = INPUT_TYPE;
     }
     for (let i = (node.inputs?.length ?? 0) - 1; i >= 0; i--) {
@@ -327,6 +413,13 @@ function updateInputs(node) {
     node.addInput(`${PREFIX}${free}`, INPUT_TYPE);
     syncLinkedSlots(node);
     syncOrderWidget(node);
+    if (node.__valhallaRestoringInputLabels) {
+      for (const input of node.inputs ?? []) {
+        if (numberedInput(input.name)) input.__valhallaLastAppliedLabel = input.label;
+      }
+    }
+    node.__valhallaRestoringInputLabels = false;
+    updateInputDisplayLabels(node);
     resizeNode(node);
   } finally {
     node.__valhallaBatchTextUpdating = false;
@@ -398,13 +491,16 @@ function installOrderControls(node) {
   ensureOrderWidget(node);
   const oldSerialize=node.onSerialize;
   node.onSerialize=function(...args){
+    updateInputDisplayLabels(this);
     syncOrderWidget(this);
     const result=oldSerialize?.apply(this,args);
     saveSocketOrder(this,args[0]);
+    saveManualInputLabels(this,args[0]);
     return result;
   };
   const oldDraw=node.onDrawForeground;
   node.onDrawForeground=function(ctx,...args){
+    updateInputDisplayLabels(this);
     const result=oldDraw?.call(this,ctx,...args);drawOrderControls(this,ctx);return result;
   };
   const oldMouseDown=node.onMouseDown;
@@ -496,7 +592,7 @@ function showInfoDialog() {
   const dialog=document.createElement('dialog');dialog.className='valhalla-batch-info';
   dialog.setAttribute('aria-label','Batch Text - help and license');
   dialog.innerHTML=`<div class="vb-content"><h2>ⓘ Batch Text</h2>
-  <p>Valhalla's Calling · v1.6.0</p>
+  <p>Valhalla's Calling · v1.6.3</p>
   <p>Combine a native ComfyUI <code>TEXT_LIST</code> and any number of individual
   <code>TEXT:n</code> inputs into a single STRING output.</p>
   <h3>How to use</h3><ol>
@@ -515,7 +611,7 @@ function showInfoDialog() {
   text preview and <code>max_chars</code> limit. The original TEXT output is
   never truncated. Enable <code>write_log</code> to show the log path and one
   folder-browser button. Clear the path to log alongside the saved workflow
-  (where the workflow storage path is available). Logs append full text for each run.</p>
+  (where the workflow storage path is available). Each workflow has a daily file, &lt;workflow&gt;_YYYYMMDD.txt; entries include a separator, node title and timestamp.</p>
   <p><strong>Conceived and created by Werner de Jong.</strong></p>
   <p><strong>License:</strong> Free to use — MIT License. © 2026 Werner de Jong.</p>
   <div class="vb-actions"><button class="vb-close" type="button">Close</button></div></div>`;
@@ -546,6 +642,7 @@ app.registerExtension({
     addInfoButton(node);
     const oldConnectionsChanged=node.onConnectionsChange;
     node.onConnectionsChange=function(...args){
+      captureManualInputLabels(this);
       const result=oldConnectionsChanged?.apply(this,args);
       if(args[0]===1||args[0]==='input')scheduleUpdate(this);
       return result;
@@ -556,6 +653,7 @@ app.registerExtension({
       this.__valhallaSavedSocketOrder=readSavedOrder(this,data);
       rememberSerializedInputs(this,data);
       const result=oldConfigure?.apply(this,args);
+      loadManualInputLabels(this,data);
       migrateLegacyDelimiter(this,data);
       ensureValidSelection(this);
       updateCustomVisibility(this);

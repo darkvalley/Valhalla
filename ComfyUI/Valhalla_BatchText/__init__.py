@@ -1,4 +1,4 @@
-"""Valhalla Batch Text v1.6.0 — © 2026 Werner de Jong, MIT License."""
+"""Valhalla Batch Text v1.6.3 — © 2026 Werner de Jong, MIT License."""
 from .batch_text import ValhallaBatchText
 
 NODE_CLASS_MAPPINGS = {"ValhallaBatchText": ValhallaBatchText}

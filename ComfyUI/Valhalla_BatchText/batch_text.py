@@ -1,4 +1,4 @@
-"""Valhalla Batch Text v1.6.0: native ComfyUI list + dynamically reorderable text inputs.
+"""Valhalla Batch Text v1.6.3: native ComfyUI list + dynamically reorderable text inputs.
 Copyright (c) 2026 Werner de Jong. MIT License.
 """
 import json
@@ -149,11 +149,8 @@ class ValhallaBatchText:
 
     @classmethod
     def IS_CHANGED(cls, show_preview=False, write_log=False, **kwargs):
-        # A previous run may have been cached without UI preview output (e.g.
-        # before show_preview was enabled). Recompute the small join whenever
-        # preview is active so ComfyUI sends a fresh executed UI payload.
-        # Crucially the original output contract remains unchanged when OFF.
-        return float("nan") if _bool(cls._scalar(show_preview)) else None
+        # Logging must execute on every queued run, even if the preview is disabled.
+        return float("nan") if _bool(cls._scalar(show_preview)) or _bool(cls._scalar(write_log)) else None
 
     @classmethod
     def join_text(cls, delimiter="None (direct)", custom_delimiter="", TEXT_LIST=None,
@@ -170,21 +167,23 @@ class ValhallaBatchText:
         for name in cls._input_names_in_order(input_order, available):
             parts.extend(cls._string_items(available[name], name))
         combined = sep.join(parts)
-        if not _bool(cls._scalar(show_preview, False)):
-            return (combined,)  # Precisely the v1.5.4 return contract when preview is OFF.
+        preview = _bool(cls._scalar(show_preview, False))
+        logging_enabled = _bool(cls._scalar(write_log, False))
+        if not preview and not logging_enabled:
+            return (combined,)
 
         try:
             limit = max(100, min(int(cls._scalar(max_chars, cls.DEFAULT_MAX_CHARS)), cls.MAX_PREVIEW_CHARS))
         except (TypeError, ValueError, OverflowError):
             limit = cls.DEFAULT_MAX_CHARS
         count = len(combined)
-        display = combined[:limit]
-        if count > limit:
+        display = combined[:limit] if preview else ""
+        if preview and count > limit:
             display += f"\n\n[PREVIEW AFGEKAPT: {limit} / {count} tekens; verhoog max_chars om meer te bekijken.]"
         ui = {"text": [display], "character_count": [count],
-              "displayed_character_count": [min(count, limit)],
+              "displayed_character_count": [min(count, limit) if preview else 0],
               "log_path": [""], "log_error": [""]}
-        if _bool(cls._scalar(write_log, False)):
+        if logging_enabled:
             workflow = _workflow_data(cls._scalar(extra_pnginfo))
             folder = cls._scalar(log_folder, "")
             hint = cls._scalar(workflow_hint, "")
@@ -334,12 +333,16 @@ def _write_log(text, folder, node_title, workflow, prompt, hint=""):
     directory = _effective_folder(folder, workflow, hint)
     if not directory.is_dir():
         return "", f"Logmap bestaat niet: {directory}. Kies een bestaande map met de mapknop."
-    name, stamp = _run_metadata(workflow, prompt, hint)
-    target = directory / f"{name}_{stamp}.txt"
+    name, _ = _run_metadata(workflow, prompt, hint)
+    now = datetime.now()
+    target = directory / f"{name}_{now:%Y%m%d}.txt"
     try:
         with _LOG_LOCK:
             with target.open("a", encoding="utf-8", newline="\n") as handle:
-                handle.write(f"{node_title}\n\n\n{text}\n\n\n")
+                handle.write("------------------------------------------------------------------\n")
+                handle.write(f"ValhallaBatchText - {node_title} {now:%Y%m%d %H:%M:%S}\n\n\n")
+                handle.write(text)
+                handle.write("\n\n\n")
         return str(target), ""
     except OSError as exc:
         _LOGGER.warning("Batch Text log schrijffout: %s", exc)

@@ -1,9 +1,10 @@
-**Valhalla Batch Text v1.6.0**
+**Valhalla Batch Text v1.6.3**
 
-- [Home](https://github.com/darkvalley/Valhalla/wiki/Home)
-- [Batch Text](https://github.com/darkvalley/Valhalla/wiki/Batch-Text)
-- [Preview and Logging](https://github.com/darkvalley/Valhalla/wiki/Preview-and-Logging) ★ New
-- [Reordering Inputs](https://github.com/darkvalley/Valhalla/wiki/Reordering-Inputs) ★ New
-- [Using TEXT_LIST](https://github.com/darkvalley/Valhalla/wiki/Using-TEXT-LIST)
-- [Combining Inputs and Delimiters](https://github.com/darkvalley/Valhalla/wiki/Combining-Inputs-and-Delimiters)
-- [Installation and Troubleshooting](https://github.com/darkvalley/Valhalla/wiki/Installation-and-Troubleshooting)
+- [Home](Home)
+- [Batch Text](Batch-Text)
+- [Automatic and Manual Input Labels](Automatic-and-Manual-Input-Labels)
+- [Preview and Logging](Preview-and-Logging)
+- [Reordering Inputs](Reordering-Inputs)
+- [Using TEXT_LIST](Using-TEXT-LIST)
+- [Combining Inputs and Delimiters](Combining-Inputs-and-Delimiters)
+- [Installation and Troubleshooting](Installation-and-Troubleshooting)

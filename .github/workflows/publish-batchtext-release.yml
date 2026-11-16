@@ -1,4 +1,4 @@
-name: Publish Batch Text v1.6.0 release
+name: Publish Batch Text v1.6.3 release
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: valhalla-batch-text-v1.6.0-release
+  group: valhalla-batch-text-v1.6.3-release
   cancel-in-progress: false
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Check out approved stable v1.6.0 code
+      - name: Check out approved stable v1.6.3 code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
@@ -39,12 +39,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/__init__.py)" = "8eff965ca8cd5e33466eff47c2c46cfe9ae1878c"
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/batch_text.py)" = "f911a2a0ef7748311bd2417eabc94191ffaedf75"
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text.js)" = "f60a85fd82faede4832978d4d31ffcacad368a31"
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text_inspector.js)" = "d5a055b7b11b7cdcb4e96d95f637c7cde7ad2b5c"
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/pyproject.toml)" = "2cade8ff6305448c9a002754fb9514dc1e05b0e2"
-          test "$(git hash-object ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.0.md)" = "1d78884cb355a9395fb6ad89873393ba666cfda0"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/__init__.py)" = "189981f4670687863bad4b01c547e3a917e4aa78"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/batch_text.py)" = "c2b715e3db89ba9cbef78ce4341944d32c492a82"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text.js)" = "86a8836a469edea54085b3f494b421083d280ad3"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/web/js/batch_text_inspector.js)" = "ada8850ced94d40d6f2679e58e690a9c7dbd273b"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/pyproject.toml)" = "740fde2f4f4592845bd8dd445fe9a7103cff17d0"
+          test "$(git hash-object ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.3.md)" = "d88e0c318429ebe39b1be1aff79164df2c887007"
           grep -Fxq 'version = "1.6.0"' ComfyUI/Valhalla_BatchText/pyproject.toml
 
       - name: Run Python regression tests
@@ -70,11 +70,11 @@ jobs:
           from zipfile import ZipFile, ZIP_DEFLATED
 
           source = Path("ComfyUI/Valhalla_BatchText")
-          archive = Path("Valhalla_BatchText_v1.6.0.zip")
+          archive = Path("Valhalla_BatchText_v1.6.3.zip")
           essential = {
               "__init__.py", "batch_text.py", "web/js/batch_text.js",
               "web/js/batch_text_inspector.js", "README.md", "LICENSE",
-              "pyproject.toml", "RELEASE_NOTES_v1.6.0.md"
+              "pyproject.toml", "RELEASE_NOTES_v1.6.3.md"
           }
           assert all((source / p).is_file() for p in essential), "Required files missing"
           with ZipFile(archive, "w", ZIP_DEFLATED, compresslevel=9) as output:
@@ -98,18 +98,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if gh release view 'v1.6.0' --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            echo 'Release v1.6.0 already exists; leaving it unchanged.'
+          if gh release view 'v1.6.3' --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo 'Release v1.6.3 already exists; leaving it unchanged.'
             exit 0
           fi
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.6.0" >/dev/null 2>&1; then
-            echo '::error::Tag v1.6.0 exists without a release; verify its target before publishing.'
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.6.3" >/dev/null 2>&1; then
+            echo '::error::Tag v1.6.3 exists without a release; verify its target before publishing.'
             exit 1
           fi
-          gh release create 'v1.6.0' \
-            './Valhalla_BatchText_v1.6.0.zip#Valhalla Batch Text v1.6.0 - ComfyUI custom node' \
+          gh release create 'v1.6.3' \
+            './Valhalla_BatchText_v1.6.3.zip#Valhalla Batch Text v1.6.3 - ComfyUI custom node' \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
-            --title 'Valhalla Batch Text v1.6.0 — Integrated Text Inspector' \
-            --notes-file 'ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.0.md' \
+            --title 'Valhalla Batch Text v1.6.3 — Daily Logging and Persistent Port Labels' \
+            --notes-file 'ComfyUI/Valhalla_BatchText/RELEASE_NOTES_v1.6.3.md' \
             --latest

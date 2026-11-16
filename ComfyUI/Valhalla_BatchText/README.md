@@ -1,11 +1,21 @@
-# Valhalla Batch Text v1.6.0 — English edition for ComfyUI
+# Valhalla Batch Text v1.6.3 — ComfyUI
 
 **Conceived and created by Werner de Jong.** © 2026 Werner de Jong.  
 **Free to use — MIT License.** See [`LICENSE`](LICENSE) for the full terms.
 
 **[Download the official v1.6.0 release](https://github.com/darkvalley/Valhalla/releases/tag/v1.6.0)** · [Download the installable ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.0/Valhalla_BatchText_v1.6.0.zip)
 
-## What's new in v1.6.0
+## What's new in v1.6.3
+
+- **Daily logs:** one UTF-8 file per workflow per day, `<workflow_name>_YYYYMMDD.txt`. Each execution is appended with a dashed separator, the Batch Text node title, date and time.
+- **Logging without preview:** `write_log` works independently of `show_preview`; both remain off by default.
+- **Log folder persistence:** the selected path is saved in the normal widget value and in `properties.valhalla_batch_text_log_folder`. Save the workflow after selecting a folder.
+- **Automatic input labels:** `TEXT:n` inputs show the connected output's visible name, such as `scene_text`. The actual input name remains `TEXT:n` for compatibility.
+- **Manual names survive:** use **Rename Slot** for a custom name. It takes precedence and is restored after save/reload or input reorder. Reset the label to its `TEXT:n` name to return to automatic labeling.
+
+**[Download official v1.6.3 ZIP](https://github.com/darkvalley/Valhalla/releases/download/v1.6.3/Valhalla_BatchText_v1.6.3.zip)** · [Release notes](RELEASE_NOTES_v1.6.3.md) · [Wiki](https://github.com/darkvalley/Valhalla/wiki)
+
+## Previously in v1.6.0
 
 The existing Batch Text node now includes an optional **integrated Text Inspector** (no extra node):
 
